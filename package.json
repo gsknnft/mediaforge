@@ -1,0 +1,93 @@
+{
+  "name": "@gsknnft/mediaforge",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/types/core.d.ts",
+      "import": "./dist/core.js",
+      "require": "./dist/core.cjs",
+      "default": "./dist/core.js"
+    },
+    "./browser": {
+      "types": "./dist/types/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.cjs",
+      "default": "./dist/browser.js"
+    },
+    "./browser-worker": {
+      "import": "./dist/browser-worker.js",
+      "require": "./dist/browser-worker.cjs",
+      "default": "./dist/browser-worker.js"
+    },
+    "./node": {
+      "types": "./dist/types/node.d.ts",
+      "import": "./dist/node/node.js",
+      "require": "./dist/node/node.cjs",
+      "default": "./dist/node/node.js"
+    },
+    "./node-worker": {
+      "import": "./dist/node/node-worker.js",
+      "require": "./dist/node/node-worker.cjs",
+      "default": "./dist/node/node-worker.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build:browser": "vite build",
+    "build:node": "node ./scripts/build-node.mjs",
+    "build:tsc": "corepack pnpm tsc --project tsconfig.json",
+    "build:types": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --declarationMap --outDir dist/types && node ./scripts/fix-types-entry.cjs",
+    "build": "corepack pnpm run clean && corepack pnpm run build:browser && corepack pnpm run build:node && corepack pnpm run build:types",
+    "clean": "rm -rf dist",
+    "format:write": "prettier --write \"**/*.{css,js,json,jsx,ts,tsx}\"",
+    "format": "prettier \"**/*.{css,js,json,jsx,ts,tsx}\"",
+    "lint": "eslint . --ext .ts,.tsx",
+    "build2": "tsup src/index.ts --format cjs --target node18 --out-dir dist",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --outfile=dist/master.js --format=cjs --packages=external",
+    "pkg": "corepack pnpm run bundle && corepack pnpm dlx nexe .",
+    "mock:bootstrap": "corepack pnpm tsx scripts/bootstrapTestEnv.ts",
+    "test:rewards": "mocha -r tsx/register test/**/*.test.ts --timeout 90000",
+    "test1": "mocha --require tsx --loader tsx ./test/**/*.test.ts",
+    "test": "tsx --test \"test/**/*.test.ts\"",
+    "test:mocha": "node --import tsx ./node_modules/mocha/bin/mocha 'test/**/*.test.ts'",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "split:sigi-expressions": "node ./scripts/split-expression-matrix.mjs",
+    "compose:sigi-expressions": "node ./scripts/compose-sigi-expressions.mjs",
+    "clean:vera-soft": "node ./scripts/clean-character-sprites.mjs --input-dir ../vera-shell/public/assets/vera --output-dir ../vera-shell/public/assets/vera-clean --mode soft --bg-threshold 12 --edge-alpha-cutoff 40 --trim 0 --halo-strip 0",
+    "split:plankton-expressions": "node ./scripts/split-expression-matrix.mjs --input ../vera-shell/public/assets/characters/plankton/expressions/plankton_eye_matrix_v2.png --output-dir ../vera-shell/public/assets/characters/plankton/expressions --manifest ./scripts/manifests/plankton-eye-matrix-v2.json",
+    "compose:plankton-expressions": "node ./scripts/compose-sigi-expressions.mjs --base-dir ../vera-shell/public/assets/characters/plankton --names normal,focused,tired,happy,sad,thinking,alarmed,sleeping,offline"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "gifuct-js": "^2.1.2",
+    "gif.js.optimized": "^1.0.1",
+    "workerpool": "^10.0.1"
+  },
+  "optionalDependencies": {
+    "canvas": "^3.2.0"
+  },
+  "devDependencies": {
+    "nanoid": "5.1.6",
+    "@types/node": "^24.7.1",
+    "esbuild": "^0.25.2",
+    "eslint": "^9.25.0",
+    "prettier": "^3.6.2",
+    "typescript": "5.9.3"
+  }
+}

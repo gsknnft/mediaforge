@@ -1,0 +1,57 @@
+import { GifImage, read } from './GIFDecoder';
+import { fetchWithRetry } from '../utils/RetryHandler';
+import { ParsedFrame, parseGIF, decompressFrames, ParsedFrameWithoutPatch } from 'gifuct-js';
+import { GIFProcessor } from '../GifProcessorv2';
+import {OverlayAsset} from '../assets/types/asset.types'
+
+class GIFExtension extends GifImage {
+      
+    readGif = async (url: string): Promise<GifImage> => {
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+        return read(new Uint8Array(buffer));
+    }
+
+    readGifReturnBuffer = async (url: string): Promise<Uint8Array> => {
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+        return new Uint8Array(buffer);
+    }
+
+    returnGifDetails = async (url: string): Promise<GifImage> => {
+        const buffer = await this.readGifReturnBuffer(url);
+        return read(buffer);
+    }
+
+    readGifFromBuffer = (buffer: Uint8Array): GifImage => {
+        return read(buffer);
+    }
+
+    readGifFromBlob = async (blob: Blob): Promise<GifImage> => {
+        const buffer = await blob.arrayBuffer();
+        return read(new Uint8Array(buffer));
+    }
+
+    processGif = async (gifUrl: string, processor: GIFProcessor): Promise<Blob> => {
+        const gifImage = async () => {
+            return await this.readGifReturnBuffer(gifUrl);
+        }
+
+        const gifBuffer = await gifImage();
+        const parsedGif = parseGIF(gifBuffer.buffer as ArrayBuffer);
+        const frames = decompressFrames(parsedGif, true);
+        return processor.generateGIF(frames, '', []);
+    }
+
+    processGifWithProcessor = async (gifUrl: string, img: string, processor: GIFProcessor, overlays?: OverlayAsset[]): Promise<Blob> => {
+        const fetchGif = async () => {
+            const response = await fetchWithRetry(gifUrl);
+            return await response.arrayBuffer();
+        }
+        const gifBuffer = await fetchGif();
+        const parsedGif = parseGIF(gifBuffer);
+        const frames = decompressFrames(parsedGif, true);
+        return processor.generateGIF(frames, img, overlays);
+    }
+}
+

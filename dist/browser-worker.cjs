@@ -1,0 +1,1 @@
+"use strict";const s=require("./taskProtocol-DBLZcalB.js"),e=new s.RuntimeTaskRegistry;s.registerScanForgePreprocessTasks(e);self.onmessage=async t=>{const r=await s.executeTaskRequest(e,t.data);self.postMessage(r)};

@@ -1,0 +1,1 @@
+{"version":3,"file":"NodeWorkerThreadsAdapter.d.ts","sourceRoot":"","sources":["../../../src/runtime/NodeWorkerThreadsAdapter.ts"],"names":[],"mappings":"AAEA,qBAAa,wBAAwB;IACvB,OAAO,CAAC,QAAQ,CAAC,UAAU,CAAC;gBAAX,UAAU,CAAC,EAAE,MAAM;IAEnC,OAAO,CAAC,QAAQ,EAAE,OAAO,EACpC,QAAQ,EAAE,MAAM,EAChB,OAAO,EAAE,QAAQ,GAChB,OAAO,CAAC,OAAO,CAAC;IAkCnB,OAAO,CAAC,iBAAiB;CAS1B"}
