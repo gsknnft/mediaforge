@@ -1,1 +1,0 @@
-{"version":3,"file":"SpriteAtlasExporter.d.ts","sourceRoot":"","sources":["../../../src/pipeline/SpriteAtlasExporter.ts"],"names":[],"mappings":"AAAA,OAAO,EACL,kBAAkB,EAClB,iBAAiB,EAGjB,aAAa,EACd,MAAM,SAAS,CAAC;AAMjB,qBAAa,mBAAmB;WACjB,cAAc,CACzB,QAAQ,EAAE,aAAa,EACvB,OAAO,GAAE,kBAAuB,GAC/B,OAAO,CAAC,iBAAiB,CAAC;CA0J9B"}
