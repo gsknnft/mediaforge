@@ -74,7 +74,9 @@ export class RuntimeTaskRegistry {
     }
 
     if (typeof handler !== "function") {
-      throw new Error(`Runtime task handler for ${taskName} must be a function`);
+      throw new Error(
+        `Runtime task handler for ${taskName} must be a function`,
+      );
     }
 
     if (this.handlers.has(taskName)) {

@@ -8,9 +8,12 @@ import {
 
 test("executeTaskRequest runs registered tasks", async () => {
   const registry = new RuntimeTaskRegistry();
-  registry.register("math.add", ({ left, right }: { left: number; right: number }) => {
-    return left + right;
-  });
+  registry.register(
+    "math.add",
+    ({ left, right }: { left: number; right: number }) => {
+      return left + right;
+    },
+  );
 
   const response = await executeTaskRequest<
     { left: number; right: number },
@@ -29,7 +32,10 @@ test("executeTaskRequest runs registered tasks", async () => {
 });
 
 test("executeTaskRequest rejects malformed requests with a stable fallback id", async () => {
-  const response = await executeTaskRequest(new RuntimeTaskRegistry(), "bad-request");
+  const response = await executeTaskRequest(
+    new RuntimeTaskRegistry(),
+    "bad-request",
+  );
 
   assert.equal(response.id, "invalid-request");
   assert.equal(response.ok, false);
