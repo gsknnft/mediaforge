@@ -4,7 +4,7 @@ var import_node_worker_threads = require("node:worker_threads");
 // src/runtime/taskProtocol.ts
 var INVALID_REQUEST_ID = "invalid-request";
 function isRecord(value) {
-  return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function isNonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;

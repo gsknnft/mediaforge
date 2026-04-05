@@ -1,5 +1,14 @@
 {
   "extends": "./tsconfig.json",
+  "include": [],
+  "exclude": [
+    "src/QuantumManager/**",
+    "src/assets/hooks/**",
+    "src/utils/gifHook.ts",
+    "src/utils/props.ts",
+    "src/GifProcessor/services/ProcessingService.tsx",
+    "src/GifProcessor/services/QualityAnalyzerService.tsx"
+  ],
   "files": [
     "src/index.ts",
     "src/core.ts",

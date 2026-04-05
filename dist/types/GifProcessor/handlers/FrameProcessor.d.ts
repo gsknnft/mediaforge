@@ -1,9 +1,9 @@
 import { ParsedFrame } from "gifuct-js";
 import { FrameDimensions, FrameSizeMetadata, GIFMetadata, ProcessedFrame } from "../types/gif.types";
+import { PixelArtHandler } from "./PixelArtHandler";
 import { CanvasPool, WorkerPool } from "../../runtime";
 import { GifAnalyzer } from "../analyzers/GifAnalyzer";
 import ImageProcessor from "../services/ImageProcessingService";
-import { PixelArtHandler } from "./PixelArtHandler";
 interface IFrameProcessor {
     calculateFrameSizeMetadata(metadata: GIFMetadata): FrameSizeMetadata;
     calculateGifFitDimensions(frameWidth: number, frameHeight: number): {

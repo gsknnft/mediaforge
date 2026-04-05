@@ -6,11 +6,11 @@ const f = {
   IMAGE_ALIGN: "scanforge.image.align",
   PREVIEW_GENERATE: "scanforge.preview.generate"
 };
-function b(t, e, a) {
+function u(t, e, a) {
   return Math.min(a, Math.max(e, t));
 }
 function W(t) {
-  return b(t, 0, 1);
+  return u(t, 0, 1);
 }
 function w(t, e, a) {
   return (a * t + e) * 4;
@@ -66,27 +66,27 @@ function H(t) {
   const e = Math.max(0, t.padding ?? 0), a = W(t.anchorX ?? 0.5), c = W(t.anchorY ?? 0.5), o = W(t.coverage ?? 0.92), h = Math.max(0.01, t.subjectScale ?? 1), s = Math.max(1, t.targetWidth - e * 2), i = Math.max(1, t.targetHeight - e * 2), r = Math.min(
     s / Math.max(1, t.subjectWidth),
     i / Math.max(1, t.subjectHeight)
-  ), n = t.scaleOverride ?? r * b(o * h, 0.01, 1), l = Math.max(1, Math.floor(t.subjectWidth * n)), d = Math.max(1, Math.floor(t.subjectHeight * n)), M = e, g = e, m = Math.max(
+  ), n = t.scaleOverride ?? r * u(o * h, 0.01, 1), l = Math.max(1, Math.floor(t.subjectWidth * n)), d = Math.max(1, Math.floor(t.subjectHeight * n)), M = e, g = e, m = Math.max(
     e,
     t.targetWidth - e - l
   ), x = Math.max(
     e,
     t.targetHeight - e - d
-  ), u = Math.round(
-    b(
+  ), b = Math.round(
+    u(
       a * t.targetWidth - l / 2,
       M,
       m
     )
   ), A = Math.round(
-    b(
+    u(
       c * t.targetHeight - d / 2,
       g,
       x
     )
   );
   return {
-    offsetX: u,
+    offsetX: b,
     offsetY: A,
     drawWidth: l,
     drawHeight: d,
@@ -107,7 +107,7 @@ function j(t) {
     t.fillColor ?? [0, 0, 0, 0],
     t.image.label
   );
-  return Y(
+  return y(
     e,
     a,
     t.placement.offsetX,
@@ -116,7 +116,7 @@ function j(t) {
     t.placement.drawHeight
   ), a;
 }
-function Y(t, e, a, c, o, h) {
+function y(t, e, a, c, o, h) {
   for (let s = 0; s < h; s += 1)
     for (let i = 0; i < o; i += 1) {
       const r = Math.min(
@@ -270,8 +270,8 @@ function G(t) {
     t.fillColor ?? [18, 20, 24, 255],
     "scanforge-preview"
   ), i = t.images.map((r, n) => {
-    const l = n % o, d = Math.floor(n / o), M = Math.min(a / r.width, c / r.height), g = Math.max(1, Math.floor(r.width * M)), m = Math.max(1, Math.floor(r.height * M)), x = e + l * (a + e) + Math.floor((a - g) / 2), u = e + d * (c + e) + Math.floor((c - m) / 2);
-    return Y(r, s, x, u, g, m), { index: n, x, y: u, width: g, height: m };
+    const l = n % o, d = Math.floor(n / o), M = Math.min(a / r.width, c / r.height), g = Math.max(1, Math.floor(r.width * M)), m = Math.max(1, Math.floor(r.height * M)), x = e + l * (a + e) + Math.floor((a - g) / 2), b = e + d * (c + e) + Math.floor((c - m) / 2);
+    return y(r, s, x, b, g, m), { index: n, x, y: b, width: g, height: m };
   });
   return {
     task: f.PREVIEW_GENERATE,
@@ -288,17 +288,17 @@ function B(t) {
   );
 }
 const N = "invalid-request";
-function y(t) {
-  return typeof t == "object" && t !== null;
+function Y(t) {
+  return typeof t == "object" && t !== null && !Array.isArray(t);
 }
 function E(t) {
   return typeof t == "string" && t.trim().length > 0;
 }
 function C(t) {
-  return y(t) && E(t.id) ? t.id : N;
+  return Y(t) && E(t.id) ? t.id : N;
 }
 function L(t) {
-  if (!y(t))
+  if (!Y(t))
     throw new Error("Runtime task request must be an object");
   if (!E(t.id))
     throw new Error("Runtime task request id must be a non-empty string");
