@@ -872,7 +872,9 @@ class GIFProcessor implements IGifProcessor {
   }
 }
 
-export const gifProcessor = GIFProcessor.getInstance();
+export function getGifProcessor(poolSize?: number, script?: string): GIFProcessor {
+  return GIFProcessor.getInstance(poolSize, script);
+}
 export { GIFProcessor };
 
 // public async generateGIF2(

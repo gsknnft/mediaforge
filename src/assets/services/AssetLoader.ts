@@ -132,4 +132,6 @@ export class AssetLoader {
   }
 }
 
-export const assetLoader = new AssetLoader();
+export function getAssetLoader(environment: Environment = ENVIRONMENT): AssetLoader {
+  return new AssetLoader(environment);
+}

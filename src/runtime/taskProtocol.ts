@@ -56,6 +56,10 @@ function assertValidTaskRequest<TPayload>(
   if (!isNonEmptyString(request.taskName)) {
     throw new Error("Runtime task request taskName must be a non-empty string");
   }
+
+  if (!("payload" in request)) {
+    throw new Error("Runtime task request payload must be present");
+  }
 }
 
 export class RuntimeTaskRegistry {

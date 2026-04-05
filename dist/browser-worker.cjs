@@ -1,1 +1,0 @@
-"use strict";const s=require("./taskProtocol-DcWOYL1z.js"),e=new s.RuntimeTaskRegistry;s.registerScanForgePreprocessTasks(e);self.onmessage=async t=>{const r=await s.executeTaskRequest(e,t.data);self.postMessage(r)};

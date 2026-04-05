@@ -47,6 +47,17 @@ test("executeTaskRequest preserves request id when the request shape is invalid"
   assert.match(response.error, /taskName must be a non-empty string/i);
 });
 
+test("executeTaskRequest rejects object-shaped requests that omit payload", async () => {
+  const response = await executeTaskRequest(new RuntimeTaskRegistry(), {
+    id: "req-3",
+    taskName: "math.add",
+  });
+
+  assert.equal(response.id, "req-3");
+  assert.equal(response.ok, false);
+  assert.match(response.error, /payload must be present/i);
+});
+
 test("RuntimeTaskRegistry rejects duplicate registrations", () => {
   const registry = new RuntimeTaskRegistry();
   const handler = () => "ok";

@@ -8,6 +8,7 @@ export type {
 } from "./pipeline/types";
 export {
   BrowserTaskAdapter,
+  executeTaskRequest,
   RuntimeTaskRegistry,
   WorkerPool,
   type RuntimeTaskFailure,

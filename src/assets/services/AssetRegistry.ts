@@ -345,4 +345,6 @@ async getBackgroundsByCategory(category: BackgroundCategory): Promise<Background
   }
 }
 
-export const assetRegistry = AssetRegistry.getInstance();
+export function getAssetRegistry(): AssetRegistry {
+  return AssetRegistry.getInstance();
+}
