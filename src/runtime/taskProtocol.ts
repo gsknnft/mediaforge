@@ -2,6 +2,8 @@ export type RuntimeTaskHandler<TPayload = unknown, TResult = unknown> = (
   payload: TPayload,
 ) => Promise<TResult> | TResult;
 
+const INVALID_REQUEST_ID = "invalid-request";
+
 export interface RuntimeTaskRequest<TPayload = unknown> {
   id: string;
   taskName: string;
@@ -24,6 +26,38 @@ export type RuntimeTaskResponse<TResult = unknown> =
   | RuntimeTaskResult<TResult>
   | RuntimeTaskFailure;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function getRequestId(request: unknown): string {
+  if (isRecord(request) && isNonEmptyString(request.id)) {
+    return request.id;
+  }
+
+  return INVALID_REQUEST_ID;
+}
+
+function assertValidTaskRequest<TPayload>(
+  request: unknown,
+): asserts request is RuntimeTaskRequest<TPayload> {
+  if (!isRecord(request)) {
+    throw new Error("Runtime task request must be an object");
+  }
+
+  if (!isNonEmptyString(request.id)) {
+    throw new Error("Runtime task request id must be a non-empty string");
+  }
+
+  if (!isNonEmptyString(request.taskName)) {
+    throw new Error("Runtime task request taskName must be a non-empty string");
+  }
+}
+
 export class RuntimeTaskRegistry {
   private readonly handlers = new Map<string, RuntimeTaskHandler>();
 
@@ -31,6 +65,18 @@ export class RuntimeTaskRegistry {
     taskName: string,
     handler: RuntimeTaskHandler<TPayload, TResult>,
   ): void {
+    if (!isNonEmptyString(taskName)) {
+      throw new Error("Runtime task name must be a non-empty string");
+    }
+
+    if (typeof handler !== "function") {
+      throw new Error(`Runtime task handler for ${taskName} must be a function`);
+    }
+
+    if (this.handlers.has(taskName)) {
+      throw new Error(`Runtime task ${taskName} is already registered`);
+    }
+
     this.handlers.set(taskName, handler as RuntimeTaskHandler);
   }
 
@@ -53,9 +99,10 @@ export class RuntimeTaskRegistry {
 
 export async function executeTaskRequest<TPayload, TResult>(
   registry: RuntimeTaskRegistry,
-  request: RuntimeTaskRequest<TPayload>,
+  request: unknown,
 ): Promise<RuntimeTaskResponse<TResult>> {
   try {
+    assertValidTaskRequest<TPayload>(request);
     const result = await registry.run<TPayload, TResult>(
       request.taskName,
       request.payload,
@@ -67,7 +114,7 @@ export async function executeTaskRequest<TPayload, TResult>(
     };
   } catch (error) {
     return {
-      id: request.id,
+      id: getRequestId(request),
       ok: false,
       error: error instanceof Error ? error.message : String(error),
     };

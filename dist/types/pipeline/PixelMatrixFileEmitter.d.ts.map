@@ -1,0 +1,1 @@
+{"version":3,"file":"PixelMatrixFileEmitter.d.ts","sourceRoot":"","sources":["../../../src/pipeline/PixelMatrixFileEmitter.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EACV,aAAa,EACb,sBAAsB,EACtB,wBAAwB,EACxB,6BAA6B,EAC9B,MAAM,SAAS,CAAC;AAWjB,qBAAa,sBAAsB;IACjC,MAAM,CAAC,WAAW,CAChB,QAAQ,EAAE,aAAa,EACvB,YAAY,GAAE,wBAA6B,EAC3C,OAAO,GAAE,6BAAkC,GAC1C,sBAAsB,EAAE;CAyD5B"}

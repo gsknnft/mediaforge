@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { RuntimeTaskRequest, RuntimeTaskResponse } from "./taskProtocol";
 
 export class NodeWorkerThreadsAdapter {
@@ -11,7 +13,7 @@ export class NodeWorkerThreadsAdapter {
       (await import("node:worker_threads")) as typeof import("node:worker_threads");
 
     const request: RuntimeTaskRequest<TPayload> = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: randomUUID(),
       taskName,
       payload,
     };
@@ -19,8 +21,10 @@ export class NodeWorkerThreadsAdapter {
 
     return new Promise<TResult>((resolve, reject) => {
       const worker = new workerThreadsModule.Worker(workerPath);
+      let settled = false;
 
       worker.once("message", (response: RuntimeTaskResponse<TResult>) => {
+        settled = true;
         worker.terminate().catch(() => undefined);
 
         if (response.ok === true) {
@@ -32,8 +36,15 @@ export class NodeWorkerThreadsAdapter {
       });
 
       worker.once("error", (error) => {
+        settled = true;
         worker.terminate().catch(() => undefined);
         reject(error);
+      });
+
+      worker.once("exit", (code) => {
+        if (!settled && code !== 0) {
+          reject(new Error(`Node worker exited before responding (code ${code})`));
+        }
       });
 
       worker.postMessage(request);

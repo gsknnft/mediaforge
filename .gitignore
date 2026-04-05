@@ -72,7 +72,6 @@ mintToWallets.*
 /app/*
 
 
-/test
 # misc
 .vscode
 /other

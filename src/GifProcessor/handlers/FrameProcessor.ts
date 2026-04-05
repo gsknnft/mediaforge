@@ -6,12 +6,11 @@ import {
   GIFMetadata,
   ProcessedFrame,
 } from "../types/gif.types";
-import { PIXEL_ART_SETTINGS } from "./PixelArtHandler";
+import { PIXEL_ART_SETTINGS, PixelArtHandler } from "./PixelArtHandler";
 // import ImageManager from "../managers/ImageManager";
 import { CanvasPool, WorkerPool } from "../../runtime";
 import { GifAnalyzer } from "../analyzers/GifAnalyzer";
 import ImageProcessor from "../services/ImageProcessingService";
-import { PixelArtHandler } from "./PixelArtHandler";
 
 interface IFrameProcessor {
   calculateFrameSizeMetadata(metadata: GIFMetadata): FrameSizeMetadata;

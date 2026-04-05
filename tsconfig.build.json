@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "files": [
+    "src/index.ts",
+    "src/core.ts",
+    "src/browser.ts",
+    "src/node.ts",
+    "src/runtime/browserWorker.ts",
+    "src/runtime/nodeWorker.ts"
+  ]
+}

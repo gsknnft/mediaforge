@@ -1,5 +1,10 @@
-import { AssetBase, BackgroundAsset, OverlayAsset } from "../types/asset.types";
-import { AssetConfig, AssetMetadata } from "../types/asset.types";
+import {
+  AssetBase,
+  AssetConfig,
+  AssetMetadata,
+  BackgroundAsset,
+  OverlayAsset,
+} from "../types/asset.types";
 import { ASSET_PATHS } from "../config/asset.config";
 
 export const ASSETS: {

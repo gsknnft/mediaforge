@@ -1,19 +1,44 @@
-# MediaForge
+# @gsknnft/mediaforge
 
-`@gsknnft/mediaforge` is the media pipeline package used by `vera-shell`, `vera-campus-ui`, and ScanForge.
+`@gsknnft/mediaforge` is a public media processing package for building timelines, extracting frames, running serializable preprocessing tasks, and exporting sprite atlases for browser and Node.js workloads.
+
+It is used by `vera-shell`, `vera-campus-ui`, and ScanForge, but it is packaged to stand on its own as a reusable library.
+
+## Install
+
+```bash
+pnpm add @gsknnft/mediaforge
+```
+
+Requirements:
+
+- Node.js 18+
+- pnpm 10+ for local development
+- optional native `canvas` support in Node.js for image-heavy server workloads
+
+## Package Entry Points
+
+- `@gsknnft/mediaforge`: core pipeline + runtime contracts
+- `@gsknnft/mediaforge/core`: explicit pipeline/runtime-only surface
+- `@gsknnft/mediaforge/browser`: browser-oriented GIF/media helpers
+- `@gsknnft/mediaforge/browser-worker`: bundled browser worker entry for serializable preprocess tasks
+- `@gsknnft/mediaforge/node`: node-side worker-thread adapter surface
+- `@gsknnft/mediaforge/node-worker`: bundled node worker entry for serializable preprocess tasks
+
+## Production Readiness Snapshot
+
+The package is structured for public publishing and production intake:
+
+- dual ESM/CJS exports with generated TypeScript declarations
+- public npm metadata, license, repository, and issue tracker links
+- prepublish validation via lint, test, build, and pack checks
+- hardened runtime task request validation for worker-safe execution
+- safer Node worker exit handling for failed worker-thread jobs
+- updated consumer and contributor documentation
 
 It is intentionally not a rendering or scene package. `three` and mesh-view concerns stay in ScanForge or other product surfaces. MediaForge stays narrow on purpose: media ingest, timeline shaping, serializable preprocess tasks, atlas export, and worker-friendly runtime contracts.
 
 The package now owns its lightweight worker/canvas runtime internally instead of depending on the monorepo-only `@sigilnet/robust-workers` package. That keeps installs isolated and removes the `workspace:*` requirement for downstream consumers.
-
-It now exposes split entrypoints so pipeline-only consumers do not have to pull the browser GIF stack:
-
-- `@gsknnft/mediaforge`: core pipeline + task protocol
-- `@gsknnft/mediaforge/core`: explicit core-only entry
-- `@gsknnft/mediaforge/browser`: browser-oriented GIF/media helpers
-- `@gsknnft/mediaforge/browser-worker`: bundled browser worker entry for serializable preprocess tasks
-- `@gsknnft/mediaforge/node`: node-side task adapter surface
-- `@gsknnft/mediaforge/node-worker`: bundled node worker entry for serializable preprocess tasks
 
 It supports:
 
@@ -57,6 +82,20 @@ That separation keeps MediaForge publishable and reusable without dragging in un
 - replayable manifest pipelines for asset preparation
 - node worker-thread execution for heavier offline preprocessing
 - package-level helpers for worker-path wiring in bundlers and apps
+- codec presets for thumbnailing, transcodes, and contact-sheet generation
+- first-class queue/job orchestration adapters for batch media workflows
+- manifest validation and schema export for safer automation pipelines
+- optional observability hooks for metrics, tracing, and progress events
+
+## Public Package Guidance
+
+Recommended production usage patterns:
+
+- import from the narrowest entry point possible to avoid unnecessary browser-only code
+- pass explicit worker entry paths when using browser or Node worker adapters
+- treat runtime task payloads as plain serializable data
+- keep optional native dependencies like `canvas` in the deployment environment only when needed
+- run `pnpm run prepublishOnly` before publishing or cutting a release
 
 ## Core Pipeline
 
@@ -306,9 +345,13 @@ const aligned = alignImageSet({
 
 For ScanForge/GLBifier specifically, these tasks are meant for preprocess and preview work around the engine, not as a replacement for the core backend reconstruction pipeline.
 
-## Build / Typecheck
+## Build / Test / Publish Checks
 
 ```bash
-pnpm --dir packages/QMediaCore run typecheck
-pnpm --dir packages/QMediaCore run build
+pnpm install
+pnpm run lint
+pnpm run test
+pnpm run typecheck
+pnpm run build
+pnpm run pack:check
 ```

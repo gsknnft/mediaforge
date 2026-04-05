@@ -1,6 +1,10 @@
 import { ParsedFrame } from "gifuct-js";
-import type { VideoExtractOptions } from "./types";
-import { MediaTimeline, TimelineClip, TimelineFrame } from "./types";
+import type {
+  MediaTimeline,
+  TimelineClip,
+  TimelineFrame,
+  VideoExtractOptions,
+} from "./types";
 import { VideoFrameExtractor } from "./VideoFrameExtractor";
 
 function normalizePatch(

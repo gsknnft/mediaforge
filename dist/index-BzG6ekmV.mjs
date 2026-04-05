@@ -1,0 +1,1228 @@
+var rt = Object.defineProperty;
+var nt = (a, t, e) => t in a ? rt(a, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : a[t] = e;
+var w = (a, t, e) => nt(a, typeof t != "symbol" ? t + "" : t, e);
+import { R as Q } from "./taskProtocol-M0cOSan_.mjs";
+function at(a) {
+  return a.map((t, e) => ({
+    ...t,
+    index: e
+  }));
+}
+function st(a) {
+  let t = 0;
+  const e = a.map((s, o) => {
+    const i = Math.max(1, Math.round(s.durationMs || 0)), h = {
+      ...s,
+      index: o,
+      timestampMs: t,
+      durationMs: i
+    };
+    return t += i, h;
+  }), r = t, n = e.length > 0 && r > 0 ? Math.max(1, Math.round(e.length * 1e3 / r)) : 1;
+  return { frames: e, durationMs: r, fps: n };
+}
+class it {
+  static cutByFrame(t, e, r, n = "clip") {
+    if (t.frames.length === 0)
+      throw new Error("Cannot cut an empty timeline");
+    const s = Math.max(0, e), o = Math.min(t.frames.length - 1, r);
+    if (o < s)
+      throw new Error(
+        `Invalid frame range: ${e}-${r}`
+      );
+    const i = at(t.frames.slice(s, o + 1)), h = st(i), c = {
+      name: n,
+      startFrame: 0,
+      endFrame: h.frames.length - 1
+    };
+    return {
+      ...t,
+      id: `${t.id}:${n}`,
+      fps: h.fps,
+      durationMs: h.durationMs,
+      frames: h.frames,
+      clips: [c]
+    };
+  }
+  static cutByTime(t, e, r, n = "clip") {
+    if (t.frames.length === 0)
+      throw new Error("Cannot cut an empty timeline");
+    const s = Math.max(0, e), o = Math.max(s, r), i = t.frames.filter((h) => {
+      const c = h.timestampMs;
+      return h.timestampMs + h.durationMs > s && c <= o;
+    });
+    if (i.length === 0)
+      throw new Error(`No frames found in range ${e}-${r}ms`);
+    return this.cutByFrame(
+      { ...t, frames: i },
+      0,
+      i.length - 1,
+      n
+    );
+  }
+  static sampleEvery(t, e, r = "sampled") {
+    if (e <= 0)
+      throw new Error("step must be greater than 0");
+    const n = t.frames.filter((s, o) => o % e === 0);
+    if (n.length === 0)
+      throw new Error("Sampling removed all frames");
+    return this.cutByFrame(
+      { ...t, frames: n },
+      0,
+      n.length - 1,
+      r
+    );
+  }
+}
+const ot = ["idle", "walk", "blink", "react"], ct = {
+  idle: [0, 0.35],
+  walk: [0.35, 0.7],
+  blink: [0.7, 0.85],
+  react: [0.85, 1]
+};
+function S(a, t) {
+  return Math.max(0, Math.min(t, a));
+}
+function ht(a, t) {
+  var r;
+  let e = 0;
+  for (let n = t.startFrame; n <= t.endFrame; n += 1)
+    e += ((r = a.frames[n]) == null ? void 0 : r.durationMs) ?? 0;
+  return e;
+}
+class lt {
+  static plan(t, e = {}) {
+    if (!t.frames.length)
+      throw new Error("Cannot plan clips for an empty timeline");
+    const r = t.frames.length - 1, n = Math.max(1, e.minClipFrames ?? 1);
+    return ot.map((s) => {
+      var u;
+      const o = (u = e.clips) == null ? void 0 : u[s];
+      if ((o == null ? void 0 : o.startFrame) !== void 0 || (o == null ? void 0 : o.endFrame) !== void 0) {
+        const d = S(o.startFrame ?? 0, r), m = S(
+          o.endFrame ?? Math.max(d, d + n - 1),
+          r
+        );
+        return {
+          name: s,
+          startFrame: Math.min(d, m),
+          endFrame: Math.max(d, m)
+        };
+      }
+      const [i, h] = ct[s], c = S(
+        Math.floor(i * t.frames.length),
+        r
+      ), l = S(
+        Math.max(
+          c + n - 1,
+          Math.ceil(h * t.frames.length) - 1
+        ),
+        r
+      );
+      return {
+        name: s,
+        startFrame: c,
+        endFrame: l
+      };
+    });
+  }
+  static split(t, e = {}) {
+    const r = this.plan(t, e), n = {};
+    for (const s of r)
+      n[s.name] = it.cutByFrame(
+        t,
+        s.startFrame,
+        s.endFrame,
+        s.name
+      );
+    return n;
+  }
+  static summarize(t, e = {}) {
+    return this.plan(t, e).map((r) => ({
+      ...r,
+      durationMs: ht(t, r)
+    }));
+  }
+}
+function ut(a, t, e, r, n) {
+  return r === 0 ? 0 : Math.round(a * 0.299 + t * 0.587 + e * 0.114) >= n ? 1 : 0;
+}
+function dt(a, t, e, r) {
+  return r === 0 ? 0 : Math.round(a * 0.299 + t * 0.587 + e * 0.114);
+}
+function mt(a) {
+  const t = a.replace(/[^a-zA-Z0-9_]/g, "_");
+  return t ? /^[0-9]/.test(t) ? `_${t}` : t : "FRAME";
+}
+function gt(a, t, e) {
+  const { data: r, width: n, height: s } = a, o = new Array(s);
+  for (let i = 0; i < s; i += 1) {
+    const h = new Array(n);
+    for (let c = 0; c < n; c += 1) {
+      const l = (i * n + c) * 4, u = r[l], d = r[l + 1], m = r[l + 2], g = r[l + 3];
+      t === "alpha-mask" ? h[c] = g > 0 ? 1 : 0 : t === "binary" ? h[c] = ut(u, d, m, g, e) : h[c] = dt(u, d, m, g);
+    }
+    o[i] = h;
+  }
+  return o;
+}
+function ft(a, t) {
+  var o;
+  const e = (o = t.frameIndexes) == null ? void 0 : o.filter(
+    (i) => Number.isInteger(i) && i >= 0 && i < a
+  );
+  if (e && e.length > 0)
+    return Array.from(new Set(e)).sort((i, h) => i - h);
+  const r = Math.max(1, t.frameStride ?? 1), n = t.maxFrames ?? a, s = [];
+  for (let i = 0; i < a && s.length < n; i += r)
+    s.push(i);
+  return s;
+}
+function pt(a) {
+  return `[
+${a.map((e) => `  [${e.join(", ")}]`).join(`,
+`)}
+]`;
+}
+function wt(a) {
+  const t = [];
+  for (const e of a)
+    for (const r of e)
+      t.push(r);
+  return t;
+}
+function xt(a) {
+  const t = new Uint8Array(Math.ceil(a.length / 8));
+  for (let e = 0; e < a.length; e += 1)
+    a[e] > 0 && (t[Math.floor(e / 8)] |= 1 << 7 - e % 8);
+  return t;
+}
+function Mt(a) {
+  if (!a.length) return "";
+  const t = 32, e = [];
+  for (let r = 0; r < a.length; r += t) {
+    const n = Array.from(a.slice(r, r + t));
+    e.push(`  ${n.join(", ")}`);
+  }
+  return `
+${e.join(`,
+`)}
+`;
+}
+function yt(a, t, e, r, n, s) {
+  const o = n.map((c) => `export const ${`${a}_FRAME_${c.index}`}: number[][] = ${pt(c.pixels)};`), i = s ? `export const ${a}_META = ${JSON.stringify(
+    {
+      mode: e,
+      threshold: r,
+      frameCount: n.length,
+      sourceTimelineId: t.id,
+      width: t.width,
+      height: t.height
+    },
+    null,
+    2
+  )} as const;` : "", h = `export const ${a}_FRAMES: number[][][] = [
+${n.map((c) => `  ${a}_FRAME_${c.index}`).join(`,
+`)}
+];`;
+  return [i, ...o, h].filter(Boolean).join(`
+
+`);
+}
+function kt(a, t, e, r, n, s) {
+  const o = s ? `export const ${a}_PACKED_META = ${JSON.stringify(
+    {
+      mode: e,
+      threshold: r,
+      frameCount: n.length,
+      sourceTimelineId: t.id,
+      width: t.width,
+      height: t.height,
+      encoding: "bit-packed-msb"
+    },
+    null,
+    2
+  )} as const;` : "", i = `export function decodeBitPackedFrame(bytes: Uint8Array, width: number, height: number): number[][] {
+  const rows: number[][] = new Array(height);
+  for (let y = 0; y < height; y += 1) {
+    const row: number[] = new Array(width);
+    for (let x = 0; x < width; x += 1) {
+      const bitIndex = y * width + x;
+      const byte = bytes[Math.floor(bitIndex / 8)] ?? 0;
+      const bit = (byte >> (7 - (bitIndex % 8))) & 1;
+      row[x] = bit;
+    }
+    rows[y] = row;
+  }
+  return rows;
+}`, h = n.map((l) => `export const ${`${a}_FRAME_${l.index}_BITS`} = new Uint8Array([${Mt(l.bytes)}]);`), c = `export const ${a}_PACKED_FRAMES = [
+${n.map((l) => {
+    const u = `${a}_FRAME_${l.index}_BITS`;
+    return `  { index: ${l.index}, width: ${l.width}, height: ${l.height}, timestampMs: ${l.timestampMs}, durationMs: ${l.durationMs}, bitLength: ${l.bitLength}, bytes: ${u} }`;
+  }).join(`,
+`)}
+] as const;`;
+  return [o, i, ...h, c].filter(Boolean).join(`
+
+`);
+}
+class U {
+  static exportTimeline(t, e = {}) {
+    const r = e.mode ?? "binary", n = e.outputFormat ?? "matrix", s = Math.max(0, Math.min(255, e.threshold ?? 128)), o = mt(
+      (e.constPrefix ?? t.id).toUpperCase()
+    ), i = e.includeMetadataConst !== !1;
+    if (n !== "matrix" && r === "grayscale")
+      throw new Error(
+        "Bit-packed output supports only binary/alpha-mask modes. Use mode 'binary' or 'alpha-mask'."
+      );
+    const c = ft(t.frames.length, e).map((g) => {
+      const f = t.frames[g];
+      return {
+        index: f.index,
+        width: f.width,
+        height: f.height,
+        timestampMs: f.timestampMs,
+        durationMs: f.durationMs,
+        pixels: gt(f.imageData, r, s)
+      };
+    }), l = n === "bit-packed" ? void 0 : yt(
+      o,
+      t,
+      r,
+      s,
+      c,
+      i
+    ), u = n === "matrix" ? void 0 : c.map((g) => {
+      const f = xt(wt(g.pixels));
+      return {
+        index: g.index,
+        width: g.width,
+        height: g.height,
+        timestampMs: g.timestampMs,
+        durationMs: g.durationMs,
+        bitLength: g.width * g.height,
+        bytes: f
+      };
+    }), d = u ? kt(
+      o,
+      t,
+      r,
+      s,
+      u,
+      i
+    ) : void 0, m = n === "matrix" ? l ?? "" : n === "bit-packed" ? d ?? "" : [l, d].filter(Boolean).join(`
+
+`);
+    return {
+      format: n,
+      constModule: m,
+      frames: c,
+      packedFrames: u,
+      matrixModule: l,
+      packedModule: d
+    };
+  }
+}
+function K(a) {
+  return a.replace(/[^a-zA-Z0-9_-]/g, "_") || "pixel_matrix";
+}
+function B(a) {
+  return a.endsWith(".ts") ? a : `${a}.ts`;
+}
+class Ot {
+  static emitModules(t, e = {}, r = {}) {
+    const n = K(r.baseFileName ?? t.id), s = r.splitByClip ?? !1, o = r.includeIndexFile ?? s;
+    if (!s) {
+      const c = U.exportTimeline(t, e);
+      return [
+        {
+          fileName: B(`${n}.pixels`),
+          content: c.constModule,
+          format: c.format,
+          frameCount: c.frames.length
+        }
+      ];
+    }
+    const i = [], h = [];
+    for (const c of t.clips) {
+      const l = [];
+      for (let f = c.startFrame; f <= c.endFrame; f += 1)
+        f >= 0 && f < t.frames.length && l.push(f);
+      if (!l.length) continue;
+      const u = U.exportTimeline(t, {
+        ...e,
+        frameIndexes: l
+      }), d = K(c.name.toLowerCase()), m = `${n}.${d}.pixels`, g = B(m);
+      i.push({
+        fileName: g,
+        content: u.constModule,
+        format: u.format,
+        clipName: c.name,
+        frameCount: u.frames.length
+      }), h.push(`export * from "./${m}";`);
+    }
+    return o && h.length > 0 && i.push({
+      fileName: B(`${n}.pixels.index`),
+      content: h.join(`
+`),
+      format: "matrix",
+      frameCount: 0
+    }), i;
+  }
+}
+function Ft(a) {
+  return {
+    ...a,
+    preprocess: a.preprocess ? { ...a.preprocess } : void 0
+  };
+}
+function I(a) {
+  return Math.max(0, Math.min(255, Math.round(a)));
+}
+function bt(a) {
+  return a ?? [24, 24, 24];
+}
+function vt(a, t) {
+  return [a[t], a[t + 1], a[t + 2], a[t + 3]];
+}
+function Tt(a, t) {
+  const e = a[0] - t[0], r = a[1] - t[1], n = a[2] - t[2];
+  return Math.sqrt(e * e + r * r + n * n);
+}
+function Y(a) {
+  const { data: t, width: e, height: r } = a, n = [
+    0,
+    (e - 1) * 4,
+    (r - 1) * e * 4,
+    ((r - 1) * e + (e - 1)) * 4
+  ];
+  let s = 0, o = 0, i = 0, h = 0;
+  for (const c of n) {
+    const [l, u, d] = vt(t, c);
+    s += l, o += u, i += d, h += 1;
+  }
+  return [
+    I(s / Math.max(1, h)),
+    I(o / Math.max(1, h)),
+    I(i / Math.max(1, h))
+  ];
+}
+function Ct(a) {
+  const { imageData: t, tolerance: e } = a, r = bt(a.keyColor) ?? Y(t), n = new Uint8ClampedArray(t.width * t.height), { data: s } = t;
+  for (let o = 0, i = 0; o < s.length; o += 4, i += 1) {
+    const h = s[o + 3];
+    if (h <= 0) {
+      n[i] = 0;
+      continue;
+    }
+    const c = Tt([s[o], s[o + 1], s[o + 2]], r);
+    n[i] = c <= e ? 0 : h;
+  }
+  return n;
+}
+function Et(a, t, e, r) {
+  if (r <= 0) return a;
+  const n = new Uint8ClampedArray(a.length), s = r * 2 + 1, o = s * s;
+  for (let i = 0; i < e; i += 1)
+    for (let h = 0; h < t; h += 1) {
+      let c = 0;
+      for (let l = -r; l <= r; l += 1) {
+        const u = Math.max(0, Math.min(e - 1, i + l));
+        for (let d = -r; d <= r; d += 1) {
+          const m = Math.max(0, Math.min(t - 1, h + d));
+          c += a[u * t + m];
+        }
+      }
+      n[i * t + h] = I(c / o);
+    }
+  return n;
+}
+function Rt(a, t) {
+  const e = new ImageData(
+    new Uint8ClampedArray(a.data),
+    a.width,
+    a.height
+  );
+  for (let r = 0, n = 0; r < e.data.length; r += 4, n += 1)
+    e.data[r + 3] = t[n];
+  return e;
+}
+function $t(a, t, e, r) {
+  let n = t, s = e, o = -1, i = -1;
+  for (let h = 0; h < e; h += 1)
+    for (let c = 0; c < t; c += 1)
+      a[h * t + c] < r || (c < n && (n = c), h < s && (s = h), c > o && (o = c), h > i && (i = h));
+  return o < n || i < s ? {
+    x: 0,
+    y: 0,
+    width: t,
+    height: e,
+    confidence: 0
+  } : {
+    x: n,
+    y: s,
+    width: o - n + 1,
+    height: i - s + 1,
+    confidence: 1
+  };
+}
+function St(a) {
+  const { frame: t, targetWidth: e, targetHeight: r, keepFrameSize: n, subjectBox: s } = a, o = n ? t.width : e, i = n ? t.height : r, h = document.createElement("canvas");
+  h.width = o, h.height = i;
+  const c = h.getContext("2d", { willReadFrequently: !0 });
+  if (!c)
+    return {
+      imageData: t.imageData,
+      width: t.width,
+      height: t.height,
+      anchor: {
+        x: t.width / 2,
+        y: t.height / 2,
+        confidence: 0,
+        label: "fallback-center"
+      }
+    };
+  const l = document.createElement("canvas");
+  l.width = t.width, l.height = t.height;
+  const u = l.getContext("2d", { willReadFrequently: !0 });
+  if (!u)
+    return {
+      imageData: t.imageData,
+      width: t.width,
+      height: t.height,
+      anchor: {
+        x: t.width / 2,
+        y: t.height / 2,
+        confidence: 0,
+        label: "fallback-center"
+      }
+    };
+  u.putImageData(t.imageData, 0, 0);
+  const d = s ?? {
+    x: 0,
+    y: 0,
+    width: t.width,
+    height: t.height
+  }, m = d.x + d.width / 2, g = d.y + d.height / 2, f = o / 2, x = i / 2, p = f - m, F = x - g;
+  return c.clearRect(0, 0, o, i), c.drawImage(l, p, F), {
+    imageData: c.getImageData(0, 0, o, i),
+    width: o,
+    height: i,
+    anchor: {
+      x: f,
+      y: x,
+      confidence: 1,
+      label: "subject-center"
+    }
+  };
+}
+function Kt(a) {
+  const t = Math.max(0, Math.min(441, a.keyTolerance ?? 42)), e = Math.max(
+    0,
+    Math.min(4, Math.round(a.featherRadius ?? 1))
+  ), r = Math.max(
+    0,
+    Math.min(255, Math.round(a.alphaThreshold ?? 18))
+  );
+  return {
+    enabled: !0,
+    stages: [
+      {
+        id: "segment-foreground",
+        run: (n) => {
+          const s = a.keyColor ?? Y(n.imageData), o = Ct({
+            imageData: n.imageData,
+            keyColor: s,
+            tolerance: t
+          }), i = Et(
+            o,
+            n.width,
+            n.height,
+            e
+          ), h = Rt(n.imageData, i), c = $t(
+            i,
+            n.width,
+            n.height,
+            r
+          );
+          return {
+            imageData: h,
+            preprocess: {
+              alphaMask: i,
+              subjectBox: c,
+              diagnostics: {
+                stage: "segment-foreground",
+                keyColor: s,
+                tolerance: t
+              }
+            }
+          };
+        }
+      },
+      {
+        id: "center-canvas",
+        run: (n) => {
+          var o;
+          const s = St({
+            frame: n,
+            targetWidth: a.targetWidth,
+            targetHeight: a.targetHeight,
+            keepFrameSize: a.keepFrameSize ?? !1,
+            subjectBox: (o = n.preprocess) == null ? void 0 : o.subjectBox
+          });
+          return {
+            imageData: s.imageData,
+            width: s.width,
+            height: s.height,
+            preprocess: {
+              ...n.preprocess ?? {},
+              anchor: s.anchor
+            }
+          };
+        }
+      }
+    ]
+  };
+}
+class It {
+  static async run(t, e) {
+    const r = (e == null ? void 0 : e.enabled) !== !1, n = r ? (e == null ? void 0 : e.stages) ?? [] : [];
+    if (!r || n.length === 0 || t.frames.length === 0)
+      return {
+        timeline: t,
+        report: {
+          enabled: r,
+          stagesRun: n.map((i) => i.id),
+          frameCount: t.frames.length
+        }
+      };
+    const s = [];
+    for (let i = 0; i < t.frames.length; i += 1) {
+      let h = Ft(t.frames[i]);
+      for (const c of n) {
+        const l = await c.run(h, {
+          stageId: c.id,
+          frameIndex: i,
+          frameCount: t.frames.length,
+          timeline: t
+        });
+        l && (l.imageData && (h.imageData = l.imageData), typeof l.width == "number" && (h.width = Math.max(1, Math.round(l.width))), typeof l.height == "number" && (h.height = Math.max(1, Math.round(l.height))), l.preprocess && (h.preprocess = {
+          ...h.preprocess ?? {},
+          ...l.preprocess
+        }));
+      }
+      s.push({
+        ...h,
+        index: s.length
+      });
+    }
+    return {
+      timeline: {
+        ...t,
+        id: `${t.id}-preprocessed`,
+        frames: s
+      },
+      report: {
+        enabled: !0,
+        stagesRun: n.map((i) => i.id),
+        frameCount: s.length
+      }
+    };
+  }
+}
+function At(a, t) {
+  return Math.floor((a + t - 1) / t);
+}
+class Wt {
+  static async exportTimeline(t, e = {}) {
+    if (!t.frames.length)
+      throw new Error("Cannot export atlas from empty timeline");
+    const r = e.framePadding ?? 2, n = e.maxAtlasWidth ?? 4096, s = e.maxAtlasHeight ?? 4096, o = Math.max(0.1, e.frameScale ?? 1), i = e.fitMode ?? "contain", h = e.backgroundFill ?? "", c = Math.max(...t.frames.map((M) => M.width)), l = Math.max(...t.frames.map((M) => M.height)), u = Math.max(1, Math.round(c * o)), d = Math.max(1, Math.round(l * o)), m = Math.max(
+      1,
+      Math.round(e.targetFrameWidth ?? u)
+    ), g = Math.max(
+      1,
+      Math.round(e.targetFrameHeight ?? d)
+    ), f = m + r * 2, x = g + r * 2, p = Math.max(1, Math.floor(n / f)), F = At(t.frames.length, p), b = Math.min(n, p * f), k = F * x;
+    if (k > s)
+      throw new Error(
+        `Atlas height ${k}px exceeds max ${s}px. Reduce frame count or increase limits.`
+      );
+    const v = document.createElement("canvas");
+    v.width = b, v.height = k;
+    const y = v.getContext("2d", { willReadFrequently: !0 });
+    if (!y)
+      throw new Error("Failed to acquire canvas context for atlas export");
+    y.clearRect(0, 0, b, k);
+    const G = t.frames.map((M, T) => {
+      const E = T % p, et = Math.floor(T / p), R = E * f + r, $ = et * x + r, C = document.createElement("canvas");
+      C.width = M.width, C.height = M.height;
+      const j = C.getContext("2d");
+      if (!j)
+        throw new Error("Failed to acquire frame canvas context");
+      j.putImageData(M.imageData, 0, 0), h && (y.fillStyle = h, y.fillRect(R, $, m, g));
+      const P = m / M.width * o, H = g / M.height * o, L = i === "cover" ? Math.max(P, H) : i === "contain" ? Math.min(P, H) : 1, q = i === "stretch" ? m : M.width * L, z = i === "stretch" ? g : M.height * L, N = R + (m - q) / 2, O = $ + (g - z) / 2;
+      return i === "cover" ? (y.save(), y.beginPath(), y.rect(R, $, m, g), y.clip(), y.drawImage(C, N, O, q, z), y.restore()) : y.drawImage(C, N, O, q, z), {
+        index: T,
+        x: R,
+        y: $,
+        width: m,
+        height: g,
+        durationMs: M.durationMs,
+        timestampMs: M.timestampMs
+      };
+    }), J = {
+      version: "1.0.0",
+      frameCount: t.frames.length,
+      atlasWidth: b,
+      atlasHeight: k,
+      frameWidth: m,
+      frameHeight: g,
+      framePadding: r,
+      cellWidth: f,
+      cellHeight: x,
+      columns: p,
+      rows: F,
+      clips: e.clipName ? [
+        {
+          name: e.clipName,
+          startFrame: 0,
+          endFrame: t.frames.length - 1
+        }
+      ] : t.clips,
+      frames: G
+    }, Z = e.imageType ?? "image/png", tt = e.imageQuality ?? 0.92;
+    return { imageBlob: await new Promise((M, T) => {
+      v.toBlob(
+        (E) => {
+          if (!E) {
+            T(new Error("Failed to encode atlas image"));
+            return;
+          }
+          M(E);
+        },
+        Z,
+        tt
+      );
+    }), manifest: J };
+  }
+}
+function V(a, t) {
+  return new Promise((e, r) => {
+    const n = () => {
+      o(), e();
+    }, s = () => {
+      o(), r(new Error(`Video event failed: ${t}`));
+    }, o = () => {
+      a.removeEventListener(t, n), a.removeEventListener("error", s);
+    };
+    a.addEventListener(t, n, {
+      once: !0
+    }), a.addEventListener("error", s, { once: !0 });
+  });
+}
+class Dt {
+  static async extractFrames(t, e = "video-timeline") {
+    const {
+      src: r,
+      fps: n = 12,
+      startMs: s = 0,
+      endMs: o,
+      maxFrames: i = 240,
+      crossOrigin: h = "anonymous"
+    } = t;
+    if (!r)
+      throw new Error("Video source is required");
+    const c = document.createElement("video");
+    c.preload = "auto", c.crossOrigin = h, c.muted = !0, c.playsInline = !0, c.src = r, await V(c, "loadedmetadata");
+    const l = c.videoWidth, u = c.videoHeight;
+    if (!l || !u)
+      throw new Error("Failed to load video dimensions");
+    const d = document.createElement("canvas");
+    d.width = l, d.height = u;
+    const m = d.getContext("2d", { willReadFrequently: !0 });
+    if (!m)
+      throw new Error("Failed to acquire canvas context for video extraction");
+    const g = Math.max(
+      s,
+      o ?? Math.floor(c.duration * 1e3)
+    ), f = Math.max(1, Math.floor(1e3 / n)), x = [];
+    let p = Math.max(0, s);
+    for (; p <= g && x.length < i; ) {
+      c.currentTime = p / 1e3, await V(c, "seeked"), m.clearRect(0, 0, l, u), m.drawImage(c, 0, 0, l, u);
+      const k = m.getImageData(0, 0, l, u);
+      x.push({
+        index: x.length,
+        timestampMs: p,
+        durationMs: f,
+        width: l,
+        height: u,
+        imageData: k
+      }), p += f;
+    }
+    if (!x.length)
+      throw new Error("No frames extracted from video source");
+    const F = x.reduce(
+      (k, v) => k + v.durationMs,
+      0
+    ), b = {
+      name: "full",
+      startFrame: 0,
+      endFrame: x.length - 1
+    };
+    return {
+      id: e,
+      sourceKind: "video",
+      fps: n,
+      durationMs: F,
+      width: l,
+      height: u,
+      frames: x,
+      clips: [b]
+    };
+  }
+}
+function qt(a) {
+  return a.buffer instanceof ArrayBuffer ? a : new Uint8ClampedArray(a);
+}
+function X(a, t, e, r, n) {
+  const s = e.reduce((h, c) => h + c.durationMs, 0), o = e.length > 0 && s > 0 ? Math.max(1, Math.round(e.length * 1e3 / s)) : 1, i = {
+    name: "full",
+    startFrame: 0,
+    endFrame: Math.max(0, e.length - 1)
+  };
+  return {
+    id: a,
+    sourceKind: t,
+    fps: o,
+    durationMs: s,
+    width: r,
+    height: n,
+    frames: e,
+    clips: [i]
+  };
+}
+class Vt {
+  static fromGifFrames(t, e = "gif-timeline") {
+    if (!t.length)
+      throw new Error("No GIF frames provided");
+    let r = 0;
+    const n = t.map((o, i) => {
+      const h = Math.max(10, Number(o.delay) || 100), c = new ImageData(
+        qt(o.patch),
+        o.dims.width,
+        o.dims.height
+      ), l = {
+        index: i,
+        timestampMs: r,
+        durationMs: h,
+        width: o.dims.width,
+        height: o.dims.height,
+        imageData: c
+      };
+      return r += h, l;
+    }), s = n[0];
+    return X(e, "gif", n, s.width, s.height);
+  }
+  static async fromImageSource(t, e = "image-timeline", r = 1e3) {
+    const n = t.width || t.width, s = t.height || t.height;
+    if (!n || !s)
+      throw new Error("Unable to derive dimensions from image source");
+    const o = document.createElement("canvas");
+    o.width = n, o.height = s;
+    const i = o.getContext("2d", { willReadFrequently: !0 });
+    if (!i)
+      throw new Error("Failed to acquire 2D context for image timeline");
+    i.clearRect(0, 0, n, s), i.drawImage(t, 0, 0, n, s);
+    const h = i.getImageData(0, 0, n, s);
+    return X(
+      e,
+      "image",
+      [
+        {
+          index: 0,
+          timestampMs: 0,
+          durationMs: Math.max(1, r),
+          width: n,
+          height: s,
+          imageData: h
+        }
+      ],
+      n,
+      s
+    );
+  }
+  static async fromVideo(t, e = "video-timeline") {
+    return Dt.extractFrames(t, e);
+  }
+}
+const zt = {
+  normal: "idle",
+  focused: "walk",
+  tired: "walk",
+  alarmed: "react",
+  sleeping: "blink",
+  offline: "react"
+};
+function Bt(a, t) {
+  return [a % t, Math.floor(a / t)];
+}
+function Ut(a, t) {
+  if (t <= 1) return a;
+  const e = [];
+  for (let s = 0; s < a.frames.length; s += t) {
+    const o = a.frames.slice(s, s + t);
+    if (!o.length) continue;
+    const i = o.reduce((c, l) => c + l.durationMs, 0), h = o[0];
+    e.push({
+      ...h,
+      index: e.length,
+      durationMs: i
+    });
+  }
+  const r = Math.max(0, e.length - 1), n = a.clips.map((s) => {
+    const o = Math.min(r, Math.floor(s.startFrame / t)), i = Math.min(r, Math.floor(s.endFrame / t));
+    return {
+      ...s,
+      startFrame: Math.min(o, i),
+      endFrame: Math.max(o, i)
+    };
+  });
+  return {
+    ...a,
+    id: `${a.id}-ds${t}`,
+    fps: a.fps / t,
+    frames: e,
+    clips: n
+  };
+}
+class Xt {
+  static async exportSpriteSheet(t, e) {
+    var x;
+    const r = await It.run(
+      t,
+      e.preprocess
+    ), n = r.timeline, s = e.maxFrames ?? 0, o = e.frameStride ?? 1, i = s > 0 ? Math.max(
+      o,
+      Math.ceil(n.frames.length / s)
+    ) : o, h = Ut(
+      n,
+      i
+    ), c = await Wt.exportTimeline(
+      h,
+      e
+    ), l = lt.summarize(h), u = /* @__PURE__ */ new Map();
+    for (const p of l)
+      u.set(p.name, p.startFrame);
+    const d = {
+      ...zt,
+      ...e.clipToExpression ?? {}
+    }, m = {};
+    for (const p of Object.keys(d)) {
+      const F = d[p], b = u.get(F) ?? 0;
+      m[p] = Bt(b, c.manifest.columns);
+    }
+    const g = {
+      type: "sheet",
+      url: e.atlasUrl,
+      cellWidth: c.manifest.cellWidth,
+      cellHeight: c.manifest.cellHeight,
+      frames: m
+    }, f = (x = e.pixelMatrix) != null && x.enabled ? U.exportTimeline(h, e.pixelMatrix) : void 0;
+    return {
+      ...c,
+      veraShellManifest: {
+        schema: "vera-shell.sprite-sheet.v1",
+        timelineId: h.id,
+        atlas: c.manifest,
+        sprite: g,
+        clips: l.map((p) => ({
+          name: p.name,
+          startFrame: p.startFrame,
+          endFrame: p.endFrame,
+          durationMs: p.durationMs
+        }))
+      },
+      pixelMatrix: f,
+      preprocess: r.report
+    };
+  }
+}
+function _t() {
+  return typeof navigator < "u" && navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4;
+}
+const W = class W {
+  constructor(t = Math.max(
+    1,
+    Math.ceil(_t())
+  ), e) {
+    w(this, "executingTasks", /* @__PURE__ */ new Map());
+    w(this, "availableWorkers", /* @__PURE__ */ new Set());
+    w(this, "taskRegistry", new Q());
+    w(this, "queue", []);
+    w(this, "initialized", !1);
+    w(this, "shutdownRequested", !1);
+    this.maxWorkers = t, this.workerScript = e;
+  }
+  static getInstance(t, e) {
+    return this.instance || (this.instance = new W(t, e)), this.instance;
+  }
+  static destroyInstance() {
+    this.instance = null;
+  }
+  get stats() {
+    return {
+      activeWorkers: this.executingTasks.size,
+      availableWorkers: this.availableWorkers.size,
+      maxWorkers: this.maxWorkers,
+      queuedTasks: this.queue.length
+    };
+  }
+  async initialize() {
+    if (!this.initialized) {
+      for (let t = 0; t < this.maxWorkers; t += 1)
+        this.availableWorkers.add(t);
+      this.shutdownRequested = !1, this.initialized = !0;
+    }
+  }
+  async registerTask(t, e) {
+    this.taskRegistry.register(t, e);
+  }
+  hasTask(t) {
+    return this.taskRegistry.has(t);
+  }
+  async runTask(t, e, r = 3e4) {
+    if (!this.taskRegistry.has(t))
+      throw new Error(`Unknown worker task: ${t}`);
+    return this.addTask(
+      () => this.taskRegistry.run(t, e),
+      r
+    );
+  }
+  async addTask(t, e = 3e4) {
+    if (this.initialized || await this.initialize(), this.shutdownRequested)
+      throw new Error("Worker pool is shutting down");
+    return new Promise((r, n) => {
+      this.queue.push({
+        task: t,
+        resolve: r,
+        reject: n,
+        timeoutMs: e
+      }), this.processQueue();
+    });
+  }
+  markWorkerAvailable(t) {
+    this.availableWorkers.add(t);
+  }
+  async terminate(t = !1) {
+    if (this.shutdownRequested = !0, t)
+      for (; this.queue.length > 0; ) {
+        const e = this.queue.shift();
+        e == null || e.reject(new Error("Worker pool terminated"));
+      }
+    for (const [, e] of this.executingTasks)
+      clearTimeout(e.timeoutId), t && e.reject(new Error("Worker pool terminated"));
+    this.executingTasks.clear(), this.availableWorkers.clear(), this.initialized = !1;
+  }
+  processQueue() {
+    for (; this.queue.length > 0 && this.availableWorkers.size > 0; ) {
+      const t = this.availableWorkers.values().next().value;
+      if (t === void 0)
+        return;
+      this.availableWorkers.delete(t);
+      const e = this.queue.shift();
+      if (!e) {
+        this.availableWorkers.add(t);
+        return;
+      }
+      const r = setTimeout(() => {
+        const n = this.executingTasks.get(t);
+        n && (this.executingTasks.delete(t), n.reject(new Error("Task timed out")), this.markWorkerAvailable(t), this.processQueue());
+      }, e.timeoutMs);
+      this.executingTasks.set(t, {
+        ...e,
+        timeoutId: r
+      }), this.executeTask(t, e, r);
+    }
+  }
+  async executeTask(t, e, r) {
+    try {
+      const n = await e.task();
+      clearTimeout(r), this.executingTasks.has(t) && e.resolve(n);
+    } catch (n) {
+      clearTimeout(r), this.executingTasks.has(t) && e.reject(n);
+    } finally {
+      this.executingTasks.delete(t), this.shutdownRequested || (this.markWorkerAvailable(t), this.processQueue());
+    }
+  }
+};
+w(W, "instance", null);
+let A = W;
+A.getInstance();
+class jt {
+  constructor(t = {}) {
+    w(this, "workerScriptUrl");
+    w(this, "pendingRequests", /* @__PURE__ */ new Map());
+    w(this, "nextRequestId", 0);
+    w(this, "worker", null);
+    w(this, "pool");
+    w(this, "registry");
+    this.pool = t.pool ?? A.getInstance(), this.registry = t.registry ?? new Q(), this.workerScriptUrl = t.workerScriptUrl;
+  }
+  registerTask(t, e) {
+    this.registry.register(t, e), this.pool.registerTask(t, e);
+  }
+  async runTask(t, e, r = 3e4) {
+    return this.registry.has(t) ? this.pool.runTask(t, e, r) : typeof Worker < "u" && this.workerScriptUrl ? this.runTaskInWorker(
+      t,
+      e,
+      r
+    ) : this.pool.runTask(t, e, r);
+  }
+  get taskRegistry() {
+    return this.registry;
+  }
+  terminate() {
+    var t;
+    for (const e of this.pendingRequests.values())
+      clearTimeout(e.timeoutId), e.reject(new Error("Browser task adapter terminated"));
+    this.pendingRequests.clear(), (t = this.worker) == null || t.terminate(), this.worker = null;
+  }
+  async runTaskInWorker(t, e, r) {
+    const n = this.ensureWorker(), s = `task-${this.nextRequestId++}`;
+    return new Promise((o, i) => {
+      const h = setTimeout(() => {
+        this.pendingRequests.delete(s), i(new Error(`Task timed out: ${t}`));
+      }, r);
+      this.pendingRequests.set(s, {
+        resolve: (c) => o(c),
+        reject: i,
+        timeoutId: h
+      }), n.postMessage({
+        id: s,
+        taskName: t,
+        payload: e
+      });
+    });
+  }
+  ensureWorker() {
+    if (this.worker)
+      return this.worker;
+    if (!this.workerScriptUrl)
+      throw new Error(
+        "BrowserTaskAdapter requires workerScriptUrl for off-main-thread execution"
+      );
+    return this.worker = new Worker(this.workerScriptUrl, { type: "module" }), this.worker.onmessage = (t) => {
+      const e = t.data, r = this.pendingRequests.get(e.id);
+      if (r) {
+        if (clearTimeout(r.timeoutId), this.pendingRequests.delete(e.id), e.ok) {
+          r.resolve(e.result);
+          return;
+        }
+        r.reject(new Error(e.error ?? "Task failed"));
+      }
+    }, this.worker.onerror = (t) => {
+      var e;
+      for (const r of this.pendingRequests.values())
+        clearTimeout(r.timeoutId), r.reject(t);
+      this.pendingRequests.clear(), (e = this.worker) == null || e.terminate(), this.worker = null;
+    }, this.worker;
+  }
+}
+new jt();
+function Pt(a, t) {
+  if (typeof document > "u")
+    throw new Error(
+      "CanvasPool requires a DOM-like environment with document.createElement"
+    );
+  const e = document.createElement("canvas");
+  return e.width = a, e.height = t, e;
+}
+const D = class D {
+  constructor(t = 5, e = 2, r = 500 * 1024 * 1024) {
+    w(this, "pool", /* @__PURE__ */ new Map());
+    w(this, "usage", /* @__PURE__ */ new Map());
+    w(this, "metrics", /* @__PURE__ */ new Map());
+    this.maxPoolSize = t, this.maxCanvasesPerSize = e, this.memoryLimit = r;
+  }
+  static getInstance() {
+    return this.instance || (this.instance = new D()), this.instance;
+  }
+  static destroyInstance() {
+    this.instance = null;
+  }
+  getCanvas(t, e, r = !1) {
+    const n = this.getKey(t, e), s = this.pool.get(n);
+    return s && s.length > 0 ? (this.incrementUsage(n), this.updateMetrics(n), s.pop()) : (this.incrementUsage(n), this.updateMetrics(n), Pt(t, e));
+  }
+  releaseCanvas(t) {
+    var n;
+    const e = this.getKey(t.width, t.height);
+    if (!this.shouldAddToPool(e)) {
+      this.disposeCanvas(t);
+      return;
+    }
+    (n = t.getContext("2d")) == null || n.clearRect(0, 0, t.width, t.height);
+    const r = this.pool.get(e) ?? [];
+    r.push(t), this.pool.set(e, r), this.updateMetrics(e);
+  }
+  clear() {
+    for (const t of this.pool.values())
+      t.forEach((e) => this.disposeCanvas(e));
+    this.pool.clear(), this.usage.clear(), this.metrics.clear();
+  }
+  terminate() {
+    this.clear();
+  }
+  getPoolSize() {
+    return this.pool.size;
+  }
+  getUsageStats() {
+    return this.usage;
+  }
+  getKey(t, e) {
+    return `${t}x${e}`;
+  }
+  incrementUsage(t) {
+    this.usage.set(t, (this.usage.get(t) ?? 0) + 1);
+  }
+  shouldAddToPool(t) {
+    var n;
+    const e = ((n = this.pool.get(t)) == null ? void 0 : n.length) ?? 0, r = Array.from(this.pool.values()).reduce(
+      (s, o) => s + o.length,
+      0
+    );
+    return e < this.maxCanvasesPerSize && r < this.maxPoolSize && this.getCurrentMemoryUsage() < this.memoryLimit;
+  }
+  getCurrentMemoryUsage() {
+    return Array.from(this.pool.entries()).reduce((t, [e, r]) => {
+      const [n, s] = e.split("x").map(Number);
+      return t + r.length * n * s * 4;
+    }, 0);
+  }
+  updateMetrics(t) {
+    const e = this.metrics.get(t) ?? { usage: 0, lastUsed: 0 };
+    e.usage += 1, e.lastUsed = Date.now(), this.metrics.set(t, e);
+  }
+  disposeCanvas(t) {
+    t.width = 0, t.height = 0, t.remove();
+  }
+};
+w(D, "instance", null);
+let _ = D;
+_.getInstance();
+export {
+  jt as B,
+  _ as C,
+  lt as N,
+  U as P,
+  Wt as S,
+  Vt as T,
+  Xt as V,
+  A as W,
+  it as a,
+  Ot as b,
+  It as c,
+  Dt as d,
+  Kt as e
+};
