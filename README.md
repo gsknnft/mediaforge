@@ -12,7 +12,7 @@ pnpm add @gsknnft/mediaforge
 
 Requirements:
 
-- Node.js 18+
+- Node.js 18-24
 - pnpm 10+ for local development
 - optional native `canvas` support in Node.js for image-heavy server workloads
 
