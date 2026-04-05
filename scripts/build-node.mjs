@@ -16,6 +16,9 @@ const shared = {
 await build({
   ...shared,
   format: "esm",
+  outExtension: {
+    ".js": ".mjs",
+  },
 });
 
 await build({

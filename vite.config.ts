@@ -42,7 +42,7 @@ export default defineConfig({
       name: "qmedia-core",
       formats: ["es", "cjs"],
       fileName: (format, entryName) =>
-        format === "es" ? `${entryName}.js` : `${entryName}.cjs`,
+        format === "es" ? `${entryName}.mjs` : `${entryName}.cjs`,
     },
     outDir: "dist",
     rollupOptions: {

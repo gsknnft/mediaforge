@@ -31,42 +31,42 @@
     "access": "public"
   },
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "default": "./dist/index.mjs"
     },
     "./core": {
       "types": "./dist/types/core.d.ts",
-      "import": "./dist/core.js",
+      "import": "./dist/core.mjs",
       "require": "./dist/core.cjs",
-      "default": "./dist/core.js"
+      "default": "./dist/core.mjs"
     },
     "./browser": {
       "types": "./dist/types/browser.d.ts",
-      "import": "./dist/browser.js",
+      "import": "./dist/browser.mjs",
       "require": "./dist/browser.cjs",
-      "default": "./dist/browser.js"
+      "default": "./dist/browser.mjs"
     },
     "./browser-worker": {
-      "import": "./dist/browser-worker.js",
+      "import": "./dist/browser-worker.mjs",
       "require": "./dist/browser-worker.cjs",
-      "default": "./dist/browser-worker.js"
+      "default": "./dist/browser-worker.mjs"
     },
     "./node": {
       "types": "./dist/types/node.d.ts",
-      "import": "./dist/node/node.js",
+      "import": "./dist/node/node.mjs",
       "require": "./dist/node/node.cjs",
-      "default": "./dist/node/node.js"
+      "default": "./dist/node/node.mjs"
     },
     "./node-worker": {
-      "import": "./dist/node/node-worker.js",
+      "import": "./dist/node/node-worker.mjs",
       "require": "./dist/node/node-worker.cjs",
-      "default": "./dist/node/node-worker.js"
+      "default": "./dist/node/node-worker.mjs"
     },
     "./package.json": "./package.json"
   },
