@@ -1,0 +1,78 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+secrets/*
+burners/*
+secure/*
+qsigs/*
+logs/*
+simulation/*
+state/*
+token_rewards/tests/*
+
+token_rewards/swaps/*
+token_rewards/state/*
+**/*.csv
+logs/*
+fyr-keys/*
+fyr-playground/*
+deployments/*
+config/*
+burners/*
+bots/*
+logs/*
+
+/state/epochs/*
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+.img_rewards_auth.json
+
+/pkg-dist/
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+test-authority.*
+snapshot.*
+my-new-mint.*
+mintToWallets.*
+
+
+
+# WIP
+/app/*
+
+
+# misc
+.vscode
+/other
