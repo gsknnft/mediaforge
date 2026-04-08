@@ -4,6 +4,18 @@
 
 It is used by `vera-shell`, `vera-campus-ui`, and ScanForge, but it is packaged to stand on its own as a reusable library.
 
+## Migration Context
+
+Inside older repo notes and historical branches, this package may still be referred to as `QMediaCore`.
+
+Current intended reading:
+
+- `QMediaCore` = legacy/internal name
+- `@gsknnft/mediaforge` = current public package identity
+- `MediaForge` = the bounded media-preprocess/runtime layer used by ScanForge, Vera Shell, and campus-facing products
+
+The package role is unchanged by the rename: it stays focused on media ingest, preprocess pipelines, atlas export, and worker-safe runtime contracts.
+
 ## Install
 
 ```bash

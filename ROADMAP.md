@@ -1,8 +1,8 @@
-# QMediaCore Roadmap
+# MediaForge Roadmap
 
 ## Vision
 
-Make QMediaCore the gold standard for cross-runtime media analysis, timeline extraction, and sprite/atlas export, with unmatched reliability, extensibility, and developer experience.
+Make MediaForge the gold standard for cross-runtime media analysis, timeline extraction, and sprite/atlas export, with unmatched reliability, extensibility, and developer experience.
 
 ## Near-Term Goals (Q2 2026)
 
