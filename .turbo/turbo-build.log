@@ -1,0 +1,4 @@
+
+> @sigilnet/qmedia-core@0.1.0 build C:\Users\G\Desktop\Builds\sigilnet\packages\QMediaCore
+> pnpm tsc --project tsconfig.json
+
