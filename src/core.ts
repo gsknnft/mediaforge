@@ -30,3 +30,5 @@ export {
   type WorkerPoolStats,
 } from "./runtime";
 export * from "./types";
+export * from "./analyzers";
+export * from "./managers";

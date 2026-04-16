@@ -12,6 +12,9 @@ Make MediaForge the gold standard for cross-runtime media analysis, timeline ext
 - [ ] Initial observability: metrics and tracing for major operations
 - [ ] Performance benchmarks for core operations (frame extraction, analysis, export)
 - [ ] Security audit: input validation, sandboxing, and safe handling of untrusted media
+- [ ] Lock the exported atlas/manifest schema used by Vera Shell and ScanForge
+- [ ] Document the `scanforge-browser` entrypoint and worker wiring patterns
+- [ ] Harden split-sheet calibration presets and occupied-bounds detection for opaque sheets
 
 ## Mid-Term Goals (Q3-Q4 2026)
 
@@ -37,6 +40,7 @@ Make MediaForge the gold standard for cross-runtime media analysis, timeline ext
 - [ ] Document all analyzers, managers, and handlers
 - [ ] Integrate basic metrics and tracing
 - [ ] Plan and prototype plugin/extension system
+- [ ] Publish a concrete manifest validation guide for atlas and preprocess automation
 
 ---
 
