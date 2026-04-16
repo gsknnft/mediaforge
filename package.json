@@ -84,6 +84,7 @@
   ],
   "scripts": {
     "build:browser": "vite build",
+    "postinstall": "pnpm build",
     "build:node": "node ./scripts/build-node.mjs",
     "build:tsc": "tsc --project tsconfig.build.json",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap --outDir dist/types && node ./scripts/fix-types-entry.cjs",
