@@ -8,6 +8,9 @@
 - [ ] Integrate initial observability (metrics, tracing)
 - [ ] Benchmark performance of core operations
 - [ ] Conduct security audit (input validation, sandboxing)
+- [ ] Lock and publish the atlas/manifest schema used by Vera Shell atlas playback
+- [ ] Document `scanforge-browser` and worker entry wiring with copy-paste examples
+- [ ] Add regression coverage for opaque-sheet bounds detection and split calibration presets
 
 ## Medium Priority
 
@@ -29,6 +32,7 @@
 
 - [ ] Update README.md with new features, usage, and architecture
 - [ ] Add code samples for all major analyzers and managers
+- [ ] Add manifest validation and atlas-consumer examples for Vera Shell / ScanForge
 - [ ] Document plugin/extension system (when available)
 
 ---

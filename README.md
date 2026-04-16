@@ -33,6 +33,7 @@ Requirements:
 - `@gsknnft/mediaforge`: core pipeline + runtime contracts
 - `@gsknnft/mediaforge/core`: explicit pipeline/runtime-only surface
 - `@gsknnft/mediaforge/browser`: browser-oriented GIF/media helpers
+- `@gsknnft/mediaforge/scanforge-browser`: ScanForge-oriented split/align/preview surface
 - `@gsknnft/mediaforge/browser-worker`: bundled browser worker entry for serializable preprocess tasks
 - `@gsknnft/mediaforge/node`: node-side worker-thread adapter surface
 - `@gsknnft/mediaforge/node-worker`: bundled node worker entry for serializable preprocess tasks
@@ -80,6 +81,7 @@ That separation keeps MediaForge publishable and reusable without dragging in un
 - split matrix sheets into reusable cells with serializable metadata
 - align subject imagery onto fixed canvases for consistent downstream framing
 - generate contact-sheet style preview boards for capture QA
+- expose ScanForge-friendly serializable split/align/preview helpers without dragging in Three.js or viewer logic
 
 ## Near-Term Uses
 
@@ -113,6 +115,8 @@ See [ROADMAP.md](./ROADMAP.md) for the full roadmap and prioritized next steps.
 - Integrate initial observability (metrics, tracing)
 - Benchmark performance of core operations
 - Conduct security audit (input validation, sandboxing)
+- Formalize the atlas/manifest validation contract used by Vera Shell and ScanForge
+- Document the `scanforge-browser` surface and worker wiring helpers explicitly
 
 **Mid-Term:**
 
@@ -143,6 +147,8 @@ See [TODO.md](./TODO.md) for the current prioritized TODO list.
 - Integrate initial observability (metrics, tracing)
 - Benchmark performance of core operations
 - Conduct security audit (input validation, sandboxing)
+- Lock the manifest/schema contract used by Vera Shell atlas playback
+- Publish clearer worker-entry and ScanForge adapter guidance
 
 **Medium Priority:**
 
@@ -163,15 +169,6 @@ See [TODO.md](./TODO.md) for the current prioritized TODO list.
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines and best practices. For feature requests, bug reports, or feedback, open an issue or submit a pull request.
-
-- richer background-removal and subject-isolation presets
-- replayable manifest pipelines for asset preparation
-- node worker-thread execution for heavier offline preprocessing
-- package-level helpers for worker-path wiring in bundlers and apps
-- codec presets for thumbnailing, transcodes, and contact-sheet generation
-- first-class queue/job orchestration adapters for batch media workflows
-- manifest validation and schema export for safer automation pipelines
-- optional observability hooks for metrics, tracing, and progress events
 
 ## Public Package Guidance
 
