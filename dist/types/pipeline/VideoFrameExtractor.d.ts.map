@@ -1,0 +1,1 @@
+{"version":3,"file":"VideoFrameExtractor.d.ts","sourceRoot":"","sources":["../../../src/pipeline/VideoFrameExtractor.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,aAAa,EAGb,mBAAmB,EACpB,MAAM,SAAS,CAAC;AAwBjB,qBAAa,mBAAmB;WACjB,aAAa,CACxB,OAAO,EAAE,mBAAmB,EAC5B,UAAU,SAAmB,GAC5B,OAAO,CAAC,aAAa,CAAC;CA2F1B"}

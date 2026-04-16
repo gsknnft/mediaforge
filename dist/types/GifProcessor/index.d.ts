@@ -1,0 +1,85 @@
+import { QualityAnalyzer } from "../analyzers/QualityAnalyzer";
+import { QUALITY_PRESETS } from "../constants/gif.constants";
+import FrameProcessor from "../handlers/FrameProcessor";
+import { PixelArtHandler } from "../handlers";
+import { ImageManager } from "../managers";
+import MemoryManager from "../managers/MemoryManager";
+import ProgressManager from "../managers/ProgressManager";
+import QualityManager from "../managers/QualityManager";
+import { SessionManager } from "../managers/SessionManager";
+import { WorkerManager } from "../managers/WorkerManager";
+import { CanvasPool, WorkerPool } from "../runtime";
+import ImageProcessingService from "../services/ImageProcessingServicev1";
+import { GIFProgressTracker } from "../trackers/GIFProgressTracker";
+import { GIFMetadata, GifOptions, OverlayAsset, ProcessedFrame, QualityOptions, QualityPresetKey } from "../types";
+import { ParsedFrame } from "gifuct-js";
+export interface IGifProcessor {
+    generateGIF(frames: ParsedFrame[], bglessUrl: string, overlays?: OverlayAsset[], quality?: keyof typeof QUALITY_PRESETS, options?: GifOptions & Partial<QualityOptions>, onError?: (error: Error) => void): Promise<Blob>;
+    extractFrames(gifUrl: string): Promise<ParsedFrame[]>;
+    streamGIF(gifUrl: string, bglessUrl: string, overlays?: OverlayAsset[], onError?: (error: Error) => void): Promise<ReadableStream<Uint8Array>>;
+}
+declare class GIFProcessor implements IGifProcessor {
+    private static instance;
+    private static sharedWorkerPool;
+    private static sharedGifWorkerPool;
+    private static activeInstanceCount;
+    private sessionId;
+    protected readonly CONSTANTS: import("../types").GifConstants;
+    protected readonly workerPath: string;
+    protected readonly workerScript?: string;
+    protected imageProcessor: ImageProcessingService;
+    protected imgManager: ImageManager;
+    protected progTracker: GIFProgressTracker;
+    protected pixelArtHandler: PixelArtHandler;
+    protected workerManager: WorkerManager;
+    protected qualityManager: QualityManager;
+    protected memoryManager: MemoryManager;
+    protected progManager: ProgressManager;
+    protected frameProcessor: FrameProcessor;
+    protected sessionManager: SessionManager;
+    protected qualityAnalyzer: QualityAnalyzer;
+    protected readonly gifWorkerPool: WorkerPool;
+    protected readonly workerPool: WorkerPool;
+    protected canvas: HTMLCanvasElement;
+    protected abort: AbortController;
+    protected completedPhases: Set<string>;
+    protected processedFramesCache: Map<string, ParsedFrame[]>;
+    protected canvasPool: CanvasPool;
+    protected workerCount: number;
+    private isProcessing;
+    protected processingStartTime: number;
+    protected framesProcessed: number;
+    protected averageFrameTime: number;
+    protected totalFrames: number;
+    protected frameStartTime: number;
+    protected frameProcessingTimes: number[];
+    protected totalFramesCount: number;
+    protected processedFramesCount: number;
+    protected phaseStartTimes: {
+        [key: string]: number;
+    };
+    private streamController;
+    protected qualityOptions: QualityOptions;
+    static getInstance(poolSize?: number, script?: string): GIFProcessor;
+    static destroyInstance(): Promise<void>;
+    constructor(poolSize?: number, script?: string);
+    private createGIF;
+    processFramesFromFrameProcessor(frames: ParsedFrame[], staticImage?: HTMLCanvasElement): Promise<ProcessedFrame[]>;
+    streamGIF(gifUrl: string, bglessUrl: string, overlays?: OverlayAsset[], onError?: (error: Error) => void): Promise<ReadableStream<Uint8Array>>;
+    private createGIFStream;
+    generateGIF(frames: ParsedFrame[], bglessUrl: string, overlays?: OverlayAsset[], quality?: keyof typeof QUALITY_PRESETS, options?: GifOptions & Partial<QualityOptions>, onError?: (error: Error) => void): Promise<Blob>;
+    extractFrames(gifUrl: string): Promise<ParsedFrame[]>;
+    analyzeGIF(gifUrl: string): Promise<{
+        metadata: GIFMetadata;
+        quality: QualityPresetKey;
+        frames: ParsedFrame[];
+    }>;
+    private readonly CHUNK_SIZE;
+    private readonly MEMORY_LIMIT;
+    private processFramesInChunks;
+    processFramesInWorkers(frames: ParsedFrame[]): Promise<ProcessedFrame[]>;
+    cleanup(): void;
+}
+export declare function getGifProcessor(poolSize?: number, script?: string): GIFProcessor;
+export { GIFProcessor };
+//# sourceMappingURL=index.d.ts.map
