@@ -1,1 +1,0 @@
-{"version":3,"file":"BitReader.d.ts","sourceRoot":"","sources":["../../../src/decoder/BitReader.ts"],"names":[],"mappings":"AAAA,qBAAa,SAAS;IACpB,OAAO,CAAC,aAAa,CAAS;IAC9B,OAAO,CAAC,kBAAkB,CAAS;IACnC,OAAO,CAAC,OAAO,CAAS;IACxB,OAAO,CAAC,KAAK,CAAa;gBAEd,KAAK,GAAE,UAA8B;IAOjD,IAAI,CAAC,KAAK,EAAE,UAAU;IAKtB,IAAI,IAAI,MAAM;IAWd,qBAAqB,CAAC,kBAAkB,EAAE,MAAM;CAIjD"}

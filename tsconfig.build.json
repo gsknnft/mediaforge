@@ -17,5 +17,10 @@
     "src/node.ts",
     "src/runtime/browserWorker.ts",
     "src/runtime/nodeWorker.ts"
-  ]
+  ],
+  "compilerOptions": {
+    "types": [
+      "node"
+    ]
+  }
 }

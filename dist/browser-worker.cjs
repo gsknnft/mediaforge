@@ -1,1 +1,0 @@
-require(`./core-BmLCqHDT.js`);const e=require(`./scanforgePreprocess-Ckk11gWE.js`);var t=new e.s;e.a(t),self.onmessage=async n=>{let r=await e.c(t,n.data);self.postMessage(r)};

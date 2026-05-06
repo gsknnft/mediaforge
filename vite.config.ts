@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import ts from "./tsconfig.json";
 
 const externalDeps = [
+  // Node built-ins
   "fs",
   "path",
   "os",
@@ -17,7 +18,11 @@ const externalDeps = [
   "child_process",
   "readline",
   "worker_threads",
-  // keep only runtime externals here
+  // React — must never be bundled; consumers provide their own copy
+  "react",
+  "react-dom",
+  "react/jsx-runtime",
+  "react/jsx-dev-runtime",
 ];
 
 const tsPaths =

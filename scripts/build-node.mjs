@@ -10,7 +10,7 @@ const shared = {
     "node-worker": "src/runtime/nodeWorker.ts",
   },
   outdir: "dist/node",
-  external: ["node:worker_threads", "node:path", "node:url", "canvas"],
+  external: ["node:*", "canvas", "sharp", "gifuct-js", "workerpool"],
 };
 
 await build({

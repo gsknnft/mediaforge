@@ -12,6 +12,7 @@ export type {
   VideoExtractOptions,
 } from "./pipeline/types";
 export * from "./services";
+export * from "./scanforgeStudio";
 export * from "./tasks";
 export * from "./trackers";
 export * from "./utils";

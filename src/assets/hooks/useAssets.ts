@@ -1,12 +1,10 @@
-
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { BackgroundAsset, OverlayAsset } from "@/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAssetRegistry } from "../services/AssetRegistry";
-import { BackgroundAsset, OverlayAsset, BackgroundCategory, OverlayCategory } from '@/types';
-
-const assetRegistry = getAssetRegistry();
 
 // Use single hook pattern
 export function useAssets() {
+  const assetRegistry = getAssetRegistry();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [assets, setAssets] = useState<{
@@ -20,7 +18,7 @@ export function useAssets() {
     return () => {
       // Clear cached resources
       cache.forEach((value) => {
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           URL.revokeObjectURL(value);
         }
       });
@@ -29,29 +27,32 @@ export function useAssets() {
   }, []);
 
   // Memory-efficient asset loading
-  const loadAsset = useCallback(async (url: string) => {
-    if (cache.has(url)) {
-      return cache.get(url);
-    }
+  const loadAsset = useCallback(
+    async (url: string) => {
+      if (cache.has(url)) {
+        return cache.get(url);
+      }
 
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    cache.set(url, objectUrl);
-    return objectUrl;
-  }, [cache]);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      cache.set(url, objectUrl);
+      return objectUrl;
+    },
+    [cache],
+  );
 
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const { backgrounds, overlays} = await assetRegistry.getAssets();
+        const { backgrounds, overlays } = await assetRegistry.getAssets();
         setAssets({
           backgrounds: backgrounds,
-          overlays: overlays
+          overlays: overlays,
         });
         setError(null);
       } catch (e) {
-        setError(e instanceof Error ? e : new Error('An error occurred'));
+        setError(e instanceof Error ? e : new Error("An error occurred"));
       } finally {
         setLoading(false);
       }
@@ -63,6 +64,6 @@ export function useAssets() {
     ...assets,
     loading,
     error,
-    reload: () => assetRegistry.clearCache()
+    reload: () => assetRegistry.clearCache(),
   };
 }

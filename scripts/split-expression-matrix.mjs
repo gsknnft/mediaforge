@@ -187,19 +187,163 @@ function estimateBackgroundColors(png) {
   return colors;
 }
 
-function keyOutBackground(png, colors, threshold) {
-  for (let i = 0; i < png.data.length; i += 4) {
-    const rgb = [png.data[i], png.data[i + 1], png.data[i + 2]];
-    const max = Math.max(rgb[0], rgb[1], rgb[2]);
-    const min = Math.min(rgb[0], rgb[1], rgb[2]);
-    const isNeutral = max - min <= 12;
-    const isCheckerLike = isNeutral && max >= 145;
-    const nearBackground = colors.some(
-      (color) => colorDistance(rgb, color) <= threshold,
-    );
-    if (nearBackground || isCheckerLike) {
-      png.data[i + 3] = 0;
+/**
+ * Detect if the image has a checker pattern background and return its parameters.
+ * Samples the top-left corner (assumed to be pure background) to find tile size
+ * and the two alternating colors. Returns null if no checker detected.
+ */
+function detectCheckerPattern(png) {
+  const { width, data } = png;
+  // Sample row 2 (avoid any JPEG fringe at row 0) for x-axis period
+  const sampleY = 2;
+  const rowR = [];
+  const sampleWidth = Math.min(300, width);
+  for (let x = 0; x < sampleWidth; x++) {
+    rowR.push(data[(sampleY * width + x) * 4]);
+  }
+  // Find the two dominant values via corner samples
+  // Sample many points along the top rows (likely pure checker) to find the two tile colors
+  const samplePoints = [];
+  for (let sy = 0; sy <= 4; sy++) {
+    for (let sx = 0; sx < sampleWidth; sx += 3) {
+      const i = (sy * width + sx) * 4;
+      const r = data[i], g = data[i+1], b = data[i+2];
+      const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
+      if (mx - mn <= 15 && mx >= 180) samplePoints.push(r); // neutral-light pixel
     }
+  }
+  if (samplePoints.length < 10) return null;
+  samplePoints.sort((a,b) => a-b);
+  // The two checker colors cluster near two values — find the valley
+  const lo = samplePoints[Math.floor(samplePoints.length * 0.25)];
+  const hi = samplePoints[Math.floor(samplePoints.length * 0.75)];
+  if (Math.abs(hi - lo) < 8) return null;
+  const c0 = [hi, hi, hi]; // light tile
+  const c1 = [lo, lo, lo]; // dark tile
+  // Determine phase at (0,0): sample corner and see which it's closer to
+  const cornerR = data[0];
+  const phaseFlip = Math.abs(cornerR - lo) < Math.abs(cornerR - hi); // true if (0,0) is dark tile
+  // Both must be neutral (R≈G≈B) and light
+  const isNeutralLight = (c) => {
+    const mx = Math.max(...c), mn = Math.min(...c);
+    return mx - mn <= 15 && mx >= 180;
+  };
+  if (!isNeutralLight(c0) || !isNeutralLight(c1)) return null;
+  if (Math.abs(c0[0] - c1[0]) < 8) return null; // no meaningful difference — not checker
+
+  // Find period: autocorrelate quantized row
+  const q = rowR.map(v => Math.abs(v - c0[0]) < Math.abs(v - c1[0]) ? 0 : 1);
+  let period = 0;
+  for (let p = 8; p <= 64; p++) {
+    let matches = 0;
+    for (let x = 0; x < Math.min(200, sampleWidth - p); x++) matches += (q[x] === q[x + p]) ? 1 : 0;
+    if (matches > Math.min(190, sampleWidth - p - 5)) { period = p; break; }
+  }
+  if (!period) return null;
+
+  const tileSize = Math.round(period / 2);
+  // Determine phase: which tile is color c0 at (0,0)?
+  // c0 is corner color, so at (0,0) tile parity is 0 → c0
+  const light = phaseFlip ? c1 : c0;
+  const dark  = phaseFlip ? c0 : c1;
+  return { tileSize, light, dark, phaseFlip };
+}
+
+/**
+ * Key out a checker pattern background using position-aware matching.
+ * Only removes pixels where the measured color matches the expected checker
+ * color AT THAT PIXEL'S GRID POSITION — subject pixels at wrong positions
+ * are preserved even if they happen to be the same color.
+ * Falls back to border-flood color keying if no checker detected.
+ */
+function keyOutBackground(png, colors, threshold, checker = null, offsetX = 0, offsetY = 0) {
+  const { width, height, data } = png;
+  const total = width * height;
+  const candidate = new Uint8Array(total);
+
+  if (checker) {
+    // Checker background removal via border flood-fill only.
+    //
+    // Key insight: Sigi's white body is indistinguishable from the light checker
+    // tiles by color alone. Positional matching can't help either — white body
+    // pixels sit on light-checker positions. The ONLY reliable separator is
+    // connectivity: the checker BG is reachable from the image border, while
+    // the white body interior is surrounded by the subject's colored outline
+    // (blue borders, dark visor) which blocks the flood.
+    //
+    // Flood spreads through pixels that are:
+    //   - near-neutral (sat <= 30), AND
+    //   - within matchTol of either checker color (not pure white > 252)
+    // This stops cleanly at Sigi's colored outlines without touching his white body.
+    const { light, dark } = checker;
+    const matchTol = 28;
+    const visited2 = new Uint8Array(total);
+    const q2 = [];
+    const push2 = (p) => {
+      if (p < 0 || p >= total || visited2[p]) return;
+      const i = p * 4;
+      if (data[i + 3] === 0) { visited2[p] = 1; return; }
+      const r = data[i], g = data[i+1], b = data[i+2];
+      const sat = Math.max(r,g,b) - Math.min(r,g,b);
+      if (sat > 30) return; // colored pixel — subject boundary, stop
+      const dLight = Math.abs(r - light[0]);
+      const dDark  = Math.abs(r - dark[0]);
+      if (dLight > matchTol && dDark > matchTol) return; // too bright/off — stop
+      visited2[p] = 1;
+      q2.push(p);
+    };
+    for (let x = 0; x < width; x++) { push2(x); push2((height-1)*width+x); }
+    for (let y = 0; y < height; y++) { push2(y*width); push2(y*width+(width-1)); }
+    while (q2.length > 0) {
+      const p = q2.pop();
+      data[p * 4 + 3] = 0;
+      const x = p % width, y = Math.floor(p / width);
+      if (x > 0) push2(p-1);
+      if (x < width-1) push2(p+1);
+      if (y > 0) push2(p-width);
+      if (y < height-1) push2(p+width);
+    }
+    return;
+  }
+
+  // Fallback for solid-color backgrounds: color-candidate + border flood-fill.
+  for (let p = 0; p < total; p += 1) {
+    const i = p * 4;
+    if (data[i + 3] === 0) continue;
+    const rgb = [data[i], data[i + 1], data[i + 2]];
+    const max = Math.max(...rgb), min = Math.min(...rgb);
+    const nearBackground = colors.some(c => colorDistance(rgb, c) <= threshold);
+    if (nearBackground || (max - min <= 12 && max >= 145)) candidate[p] = 1;
+  }
+
+  const visited = new Uint8Array(total);
+  const queue = [];
+  const pushIfCandidate = (p) => {
+    if (p < 0 || p >= total) return;
+    if (!candidate[p] || visited[p]) return;
+    visited[p] = 1;
+    queue.push(p);
+  };
+  for (let x = 0; x < width; x += 1) {
+    pushIfCandidate(x);
+    pushIfCandidate((height - 1) * width + x);
+  }
+  for (let y = 0; y < height; y += 1) {
+    pushIfCandidate(y * width);
+    pushIfCandidate(y * width + (width - 1));
+  }
+  while (queue.length > 0) {
+    const p = queue.pop();
+    const x = p % width;
+    const y = Math.floor(p / width);
+    if (x > 0) pushIfCandidate(p - 1);
+    if (x < width - 1) pushIfCandidate(p + 1);
+    if (y > 0) pushIfCandidate(p - width);
+    if (y < height - 1) pushIfCandidate(p + width);
+  }
+  for (let p = 0; p < total; p += 1) {
+    if (!visited[p]) continue;
+    data[p * 4 + 3] = 0;
   }
 }
 
@@ -275,6 +419,54 @@ function cleanupTransparentPixels(png) {
       png.data[i] = 0;
       png.data[i + 1] = 0;
       png.data[i + 2] = 0;
+    }
+  }
+}
+
+/**
+ * Remove alpha blobs whose centroid falls in the top or bottom edge band
+ * (edgeFraction of height). Used to drop row-bleed from adjacent grid cells.
+ */
+function removeEdgeBandBlobs(png, edgeFraction = 0.15) {
+  const { width, height, data } = png;
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  const topBand = Math.floor(height * edgeFraction);
+  const bottomBand = height - topBand;
+
+  const neighbors = (p) => {
+    const x = p % width;
+    const y = Math.floor(p / width);
+    const out = [];
+    if (x > 0) out.push(p - 1);
+    if (x < width - 1) out.push(p + 1);
+    if (y > 0) out.push(p - width);
+    if (y < height - 1) out.push(p + width);
+    return out;
+  };
+
+  for (let p = 0; p < total; p += 1) {
+    if (visited[p] || data[p * 4 + 3] === 0) { visited[p] = 1; continue; }
+
+    const queue = [p];
+    visited[p] = 1;
+    const component = [];
+    let sumY = 0;
+
+    while (queue.length > 0) {
+      const cur = queue.pop();
+      component.push(cur);
+      sumY += Math.floor(cur / width);
+      for (const next of neighbors(cur)) {
+        if (visited[next]) continue;
+        visited[next] = 1;
+        if (data[next * 4 + 3] > 0) queue.push(next);
+      }
+    }
+
+    const centroidY = sumY / component.length;
+    if (centroidY < topBand || centroidY > bottomBand) {
+      for (const cp of component) data[cp * 4 + 3] = 0;
     }
   }
 }
@@ -438,6 +630,8 @@ async function main() {
     ? parseNonNegativeIntArg("--bg-threshold", modePreset.bgThreshold)
     : parseMaybeInt(manifest?.bgThreshold, modePreset.bgThreshold);
   const forceKeying = hasArg("--force-keying");
+  const noComponentFilter = hasArg("--no-component-filter");
+  const removeEdgeBlobs = hasArg("--remove-edge-blobs");
 
   const image = await readPngRobust(inputPath);
   const cells = [];
@@ -477,6 +671,15 @@ async function main() {
   }
 
   await fs.mkdir(outputDir, { recursive: true });
+
+  // Detect checker once from the full source image (corners guaranteed to be background).
+  const globalChecker = detectCheckerPattern(image);
+  if (globalChecker) {
+    console.log(`checker detected: tileSize=${globalChecker.tileSize} light=${globalChecker.light[0]} dark=${globalChecker.dark[0]}`);
+  }
+
+  // Pass 1: extract, key, and collect subject bounds per cell
+  const processedCells = [];
   for (let i = 0; i < cells.length; i += 1) {
     const cell = cells[i];
     const sx = Math.max(0, cell.x);
@@ -508,21 +711,44 @@ async function main() {
 
     const hasAlpha = hasMeaningfulTransparency(splitPng);
     if (forceKeying || !hasAlpha) {
-      const backgroundColors = estimateBackgroundColors(splitPng);
-      keyOutBackground(splitPng, backgroundColors, bgThreshold);
+      // Pass the global checker + this cell's absolute offset so phase is correct.
+      keyOutBackground(splitPng, estimateBackgroundColors(splitPng), bgThreshold, globalChecker, sx, sy);
     }
-    keepLargestAlphaComponent(splitPng);
+    if (removeEdgeBlobs) {
+      removeEdgeBandBlobs(splitPng, 0.15);
+    }
+    if (!noComponentFilter) {
+      keepLargestAlphaComponent(splitPng);
+    }
     if (forceKeying || !hasAlpha) {
       suppressSoftHalo(splitPng, edgeAlphaCutoff);
       stripOuterHaloRing(splitPng, haloStripPasses);
     }
     cleanupTransparentPixels(splitPng);
     const bounds = trimBounds(findAlphaBounds(splitPng), trimPx);
-    const outPng = bounds
-      ? centerOnTransparentCanvas(splitPng, bounds, cellWidth, cellHeight)
-      : new PNG({ width: cellWidth, height: cellHeight });
+    processedCells.push({ name: cell.name, png: splitPng, bounds, cellWidth, cellHeight });
+  }
 
-    const outFile = path.join(outputDir, `${cell.name}.png`);
+  // Pass 2: find shared canvas size (largest subject across all frames)
+  // so every output frame is aligned for consistent camera distance in SfM.
+  let sharedW = 0, sharedH = 0;
+  for (const { bounds, cellWidth, cellHeight } of processedCells) {
+    const w = bounds ? bounds.width : cellWidth;
+    const h = bounds ? bounds.height : cellHeight;
+    if (w > sharedW) sharedW = w;
+    if (h > sharedH) sharedH = h;
+  }
+  // Add padding so subject never butts up against canvas edge
+  const canvasPad = Math.round(Math.max(sharedW, sharedH) * 0.08);
+  const canvasW = sharedW + canvasPad * 2;
+  const canvasH = sharedH + canvasPad * 2;
+
+  for (const { name, png, bounds, cellWidth, cellHeight } of processedCells) {
+    const outPng = bounds
+      ? centerOnTransparentCanvas(png, bounds, canvasW, canvasH)
+      : new PNG({ width: canvasW, height: canvasH });
+
+    const outFile = path.join(outputDir, `${name}.png`);
     await fs.writeFile(outFile, PNG.sync.write(outPng));
     console.log(`wrote ${path.relative(repoRoot, outFile)}`);
   }

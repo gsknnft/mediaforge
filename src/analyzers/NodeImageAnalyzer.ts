@@ -1,4 +1,3 @@
-import { createCanvas, loadImage } from "canvas";
 import { BaseImageAnalyzer } from "./BaseImageAnalyzer";
 
 /**
@@ -40,7 +39,15 @@ export class NodeImageAnalyzer extends BaseImageAnalyzer {
   // ─── Runtime: node-canvas ─────────────────────────────────────────────────
 
   protected async decodeImage(buffer: ArrayBuffer): Promise<CanvasDecoded> {
-    // loadImage accepts a Buffer directly
+    // Lazy-import canvas so the module loads fine when canvas is unavailable.
+    // Use ServerImageAnalyzer (sharp-based) if you don't have node-canvas installed.
+    const { createCanvas, loadImage } = await import("canvas").catch(() => {
+      throw new Error(
+        "node-canvas is not installed or failed to load. " +
+        "Install it with: pnpm add canvas  — or use ServerImageAnalyzer (sharp-based) instead."
+      );
+    });
+
     const nodeBuffer = Buffer.from(buffer);
     const image = await loadImage(nodeBuffer);
 
