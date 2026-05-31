@@ -168,6 +168,11 @@ export type TimelinePreprocessStageId =
   | "segment-foreground"
   | "stabilize-mask"
   | "center-canvas"
+  | "image-snap-pixel"
+  | "image-snap-illustrative"
+  | "image-snap-smooth"
+  | "image-snap-edge-only"
+  | "image-snap-bg-remove"
   | "custom";
 
 export interface TimelinePreprocessStageContext {

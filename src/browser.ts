@@ -16,16 +16,15 @@ export const MEDIAFORGE_BROWSER_CAPABILITIES = Object.freeze({
 });
 
 export * from "./types";
-export * from "./core";
 
 export {
   BitReader,
   CodeTable,
+  GifExtension,
   GifFrame,
   GifImage,
   read,
   useGifDecoder,
-  GifExtension,
 } from "./decoder";
 
 export {
@@ -60,9 +59,7 @@ export {
   type SerializableImageData,
 } from "./tasks";
 
-
-
-export { Giffyness, GIFExtension } from "./GifExtension";
+export { GIFExtension, Giffyness } from "./GifExtension";
 export { getGifProcessor, GIFProcessor } from "./GifProcessor";
 export type { IGifProcessor } from "./GifProcessor";
 export {
@@ -81,11 +78,11 @@ export {
 } from "./pipeline";
 
 export {
-  PixelGifScaler,
-  RetryHandler,
   autoCompressGIF,
   compressGIFWithSettings,
   downloadBlob,
-  selectFileAndCompress,
   fileDataToImage,
+  PixelGifScaler,
+  RetryHandler,
+  selectFileAndCompress,
 } from "./utils";

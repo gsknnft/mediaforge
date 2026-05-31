@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import type { OverlayAsset } from "../types/asset.types";
 import { GIFProcessor } from "../GifProcessor";
+import type { OverlayAsset } from "../types/asset.types";
 
 export const useGIFProcessing = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,28 +43,3 @@ export const useGIFProcessing = () => {
     setCurrentOverlays,
   };
 };
-
-  const htmlToCanvas = useCallback(async (html: HTMLImageElement): Promise<HTMLCanvasElement> => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', {willReadFrequently: true});
-    if (!ctx) {
-      throw new Error('Could not create canvas context');
-    }
-    const img = new Image();
-    img.src = html.src;
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = (err) => reject(err);
-    });
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    return canvas;
-  }, []);
-
-  const bulkHtmlToCanvas = useCallback(async (htmls: HTMLImageElement[]): Promise<HTMLCanvasElement[]> => {
-    const canvases = await Promise.all(htmls.map(async (html) => {
-      return await htmlToCanvas(html);
-    }));
-    return canvases;
-  }, [htmlToCanvas]);

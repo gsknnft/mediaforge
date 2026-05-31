@@ -104,6 +104,7 @@
     "pack:check": "corepack pnpm pack --dry-run",
     "prepublishOnly": "corepack pnpm run lint && corepack pnpm run test && corepack pnpm run build && corepack pnpm run pack:check",
     "split:sigi-expressions": "node ./scripts/split-expression-matrix.mjs",
+    "build:coherence-clash-atlas": "node ./scripts/build-coherence-clash-atlas.mjs",
     "compose:sigi-expressions": "node ./scripts/compose-sigi-expressions.mjs",
     "clean:vera-soft": "node ./scripts/clean-character-sprites.mjs --input-dir ../vera-shell/public/assets/vera --output-dir ../vera-shell/public/assets/vera-clean --mode soft --bg-threshold 12 --edge-alpha-cutoff 40 --trim 0 --halo-strip 0",
     "split:plankton-expressions": "node ./scripts/split-expression-matrix.mjs --input ../vera-shell/public/assets/characters/plankton/expressions/plankton_eye_matrix_v2.png --output-dir ../vera-shell/public/assets/characters/plankton/expressions --manifest ./scripts/manifests/plankton-eye-matrix-v2.json",

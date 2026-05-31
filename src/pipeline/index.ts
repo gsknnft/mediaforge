@@ -15,6 +15,13 @@ export {
   createFlatBackgroundSpritePreprocess,
   PreprocessPipeline,
 } from "./PreprocessPipeline";
+export {
+  createImageSnapStage,
+  createImageSnapPreprocess,
+  createSnapWithBgRemove,
+  type ImageSnapMode,
+  type ImageSnapOptions,
+} from "./snapStage";
 export { SpriteAtlasExporter } from "./SpriteAtlasExporter";
 export {
   validateSprite,
